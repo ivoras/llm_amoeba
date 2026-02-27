@@ -46,10 +46,7 @@ export class LLMClient {
       response_format: ACTION_RESPONSE_FORMAT,
       ...(!useCompletionTokens && { temperature: settings.temperature }),
       ...(useCompletionTokens
-        ? {
-            max_completion_tokens: maxTokens,
-            reasoning: { effort: 'medium' },
-          }
+        ? { max_completion_tokens: maxTokens }
         : { max_tokens: maxTokens }),
     }
 
