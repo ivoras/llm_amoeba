@@ -123,6 +123,11 @@ export class CycleManager {
 
   private async runCycle(): Promise<void> {
     if (!this.cycling) return
+    if (this.amoebas.length === 0) {
+      this.stop()
+      gameStore.stats.running = false
+      return
+    }
 
     const cycleStartTime = Date.now()
     gameStore.stats.cycleCount++
@@ -206,7 +211,7 @@ export class CycleManager {
     this.updateStats()
 
     if (this.amoebas.length === 0) {
-      this.cycling = false
+      this.stop()
       gameStore.stats.running = false
       return
     }
