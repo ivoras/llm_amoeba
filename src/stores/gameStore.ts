@@ -8,6 +8,11 @@ const STORAGE_KEY = 'llm-amoeba-settings'
 
 const DEFAULT_SYSTEM_PROMPT = `You are the brain of a single-celled amoeba living on a microscopic 2D surface. Each cycle you receive your current position, energy level, and a description of nearby objects. You must respond with a single JSON object choosing one action.
 
+Coordinate system:
+- Origin is at the top-left of the world: (0, 0).
+- +x points right.
+- +y points down.
+
 Available actions:
 - move: Move in one of 8 compass directions. Distance must be 0.5-5 body lengths per cycle (minimum 0.5). Costs 0.2 energy per body-length.
   Directions: "right", "up-right", "up", "up-left", "left", "down-left", "down", "down-right"
