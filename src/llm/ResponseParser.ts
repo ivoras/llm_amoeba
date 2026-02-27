@@ -1,6 +1,15 @@
 import type { AmoebaAction } from '@/types'
 import { MIN_MOVE_BODY_LENGTHS, MAX_MOVE_BODY_LENGTHS } from '@/game/constants'
 
+const DIRECTION_MAP: Record<string, number> = {
+  'right':       0,
+  'upper-right': 1,
+  'upper-left':  2,
+  'left':        3,
+  'lower-left':  4,
+  'lower-right': 5,
+}
+
 export class ResponseParser {
   parse(raw: string): AmoebaAction {
     const jsonStr = this.extractJson(raw)
@@ -34,20 +43,18 @@ export class ResponseParser {
 
     switch (data.action) {
       case 'move': {
-        const direction = Number(data.direction)
+        const directionIndex = DIRECTION_MAP[String(data.direction ?? '').toLowerCase()]
         const distance = Number(data.distance)
         if (
-          Number.isFinite(direction) &&
-          direction >= 0 &&
-          direction <= 5 &&
+          directionIndex !== undefined &&
           Number.isFinite(distance) &&
           distance >= MIN_MOVE_BODY_LENGTHS &&
           distance <= MAX_MOVE_BODY_LENGTHS
         ) {
           return {
             action: 'move',
-            direction: Math.round(direction),
-            distance: Math.max(MIN_MOVE_BODY_LENGTHS, Math.min(Number(distance), MAX_MOVE_BODY_LENGTHS)),
+            direction: directionIndex,
+            distance: Math.max(MIN_MOVE_BODY_LENGTHS, Math.min(distance, MAX_MOVE_BODY_LENGTHS)),
           }
         }
         return { action: 'idle' }

@@ -25,7 +25,7 @@ export const ENEMY_VISION_CM = 0.05
 export const ENEMY_VISION_PX = ENEMY_VISION_CM * PIXELS_PER_CM   // 60
 
 // Movement
-export const MIN_MOVE_BODY_LENGTHS = 0.5
+export const MIN_MOVE_BODY_LENGTHS = 1
 export const MAX_MOVE_BODY_LENGTHS = 5
 export const MOVE_ENERGY_COST_PER_BODY_LENGTH = 0.1
 export const HEX_DIRECTIONS = [

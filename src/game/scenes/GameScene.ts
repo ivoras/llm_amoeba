@@ -37,7 +37,6 @@ export class GameScene extends Phaser.Scene {
 
   public cycleManager!: CycleManager
   public cameraController!: CameraController
-  private tooltip!: Phaser.GameObjects.Text
 
   constructor() {
     super({ key: 'GameScene' })
@@ -69,30 +68,22 @@ export class GameScene extends Phaser.Scene {
       }
     })
 
-    this.tooltip = this.add.text(0, 0, '', {
-      fontSize: '11px',
-      fontFamily: 'monospace',
-      color: '#e6edf3',
-      backgroundColor: '#161b22ee',
-      padding: { left: 6, right: 6, top: 3, bottom: 3 },
-    })
-    this.tooltip.setDepth(1000).setVisible(false).setScrollFactor(0)
-
     this.input.on('gameobjectover', (_pointer: Phaser.Input.Pointer, obj: Phaser.GameObjects.GameObject) => {
       const text = this.getTooltipText(obj)
       if (text) {
-        this.tooltip.setText(text).setVisible(true)
+        gameStore.tooltip.text = text
+        gameStore.tooltip.visible = true
       }
     })
 
     this.input.on('gameobjectout', () => {
-      this.tooltip.setVisible(false)
+      gameStore.tooltip.visible = false
     })
 
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-      if (this.tooltip.visible) {
-        this.tooltip.setPosition(pointer.x + 12, pointer.y - 8)
-      }
+      const ev = pointer.event as MouseEvent
+      gameStore.tooltip.x = ev.clientX
+      gameStore.tooltip.y = ev.clientY
     })
 
     this.updateStats()
@@ -139,6 +130,7 @@ export class GameScene extends Phaser.Scene {
 
   resetGame(): void {
     this.cycleManager.stop()
+    this.cycleManager.clearHistory()
     gameStore.stats.running = false
     gameStore.stats.cycleCount = 0
     gameStore.clearLog()
@@ -236,13 +228,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateStats(): void {
-    gameStore.stats.amoebaCount = this.amoebas.filter((a) => a.alive).length
+    const alive = this.amoebas.filter((a) => a.alive)
+    gameStore.stats.amoebaCount = alive.length
     gameStore.stats.foodCount = this.foods.filter((f) => !f.depleted).length
     gameStore.stats.enemyCount = this.enemies.filter((e) => e.alive).length
     gameStore.stats.poisonCount = this.poisons.length
+    gameStore.stats.amoebas = alive.map((a) => ({ id: a.amoebaId, energy: a.energy }))
 
-    if (this.amoebas.length > 0) {
-      gameStore.stats.selectedAmoebaEnergy = this.amoebas[0]?.energy ?? 0
+    if (alive.length > 0) {
+      gameStore.stats.selectedAmoebaEnergy = alive[0].energy
     }
   }
 }

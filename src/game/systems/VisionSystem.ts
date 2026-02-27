@@ -35,7 +35,7 @@ export class VisionSystem {
           details: {
             radius: food.effectiveRadiusCm,
             energy: food.remainingEnergy,
-            energyAtPosition: food.getEnergyAtDistance(dist),
+            energyAtYourPosition: food.getEnergyAtDistance(dist),
           },
         })
       }

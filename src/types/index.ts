@@ -104,6 +104,11 @@ export interface LLMChatResponse {
   }[]
 }
 
+export interface AmoebaHUDInfo {
+  id: string
+  energy: number
+}
+
 export interface GameStats {
   cycleCount: number
   amoebaCount: number
@@ -111,6 +116,7 @@ export interface GameStats {
   enemyCount: number
   poisonCount: number
   selectedAmoebaEnergy: number
+  amoebas: AmoebaHUDInfo[]
   running: boolean
 }
 

@@ -13,12 +13,16 @@ import {
   POISON_MAX_ENERGY,
   WORLD_WIDTH_CM,
   WORLD_HEIGHT_CM,
+  HEX_DIRECTIONS,
   cmToPx,
-  FOOD_RESPAWN_INTERVAL_CYCLES,
-  POISON_RESPAWN_INTERVAL_CYCLES,
   INITIAL_FOOD_COUNT,
   INITIAL_POISON_COUNT,
+  INITIAL_ENEMY_COUNT,
+  MIN_ENEMY_SPAWN_DISTANCE_CM,
   DIVISION_ENERGY_THRESHOLD,
+  MOVE_ENERGY_COST_PER_BODY_LENGTH,
+  AMOEBA_RADIUS_CM,
+  ENEMY_DRAIN_RADIUS_MULTIPLIER,
 } from '../constants'
 import { LLMClient } from '@/llm/LLMClient'
 import { PromptBuilder } from '@/llm/PromptBuilder'
@@ -26,7 +30,7 @@ import { ResponseParser } from '@/llm/ResponseParser'
 import { VisionSystem } from './VisionSystem'
 import { EnemyAI } from './EnemyAI'
 import type { Amoeba } from '../entities/Amoeba'
-import type { Enemy } from '../entities/Enemy'
+import { Enemy } from '../entities/Enemy'
 import { FoodItem } from '../entities/FoodItem'
 import { PoisonItem } from '../entities/PoisonItem'
 import type { LLMSettings, LLMMessage, AmoebaAction } from '@/types'
@@ -48,6 +52,14 @@ export class CycleManager {
 
   private cycling = false
   private cycleTimer: number | null = null
+
+  // Keeps the last MAX_HISTORY_MESSAGES messages per amoeba (excluding system + current user).
+  // Each roundtrip = 1 user + 1 assistant = 2 messages; 5 roundtrips = 10 messages.
+  private amoebaHistory = new Map<string, LLMMessage[]>()
+  private static readonly MAX_HISTORY_MESSAGES = 10
+
+  // Tracks the last resolved action, outcome, and energy snapshot per amoeba for next-cycle feedback.
+  private amoebaLastAction = new Map<string, { description: string; outcome: string; energyBefore: number }>()
 
   constructor(
     scene: Phaser.Scene,
@@ -75,6 +87,11 @@ export class CycleManager {
       clearTimeout(this.cycleTimer)
       this.cycleTimer = null
     }
+  }
+
+  clearHistory(): void {
+    this.amoebaHistory.clear()
+    this.amoebaLastAction.clear()
   }
 
   get isRunning(): boolean {
@@ -105,6 +122,14 @@ export class CycleManager {
 
     const actions = await Promise.allSettled(actionPromises)
 
+    // Snapshot energy before executing, so we can measure effects
+    const preActionEnergy = new Map<string, number>()
+    for (const amoeba of readyAmoebas) {
+      preActionEnergy.set(amoeba.amoebaId, amoeba.energy)
+    }
+
+    // Execute and collect outcome text
+    const outcomes = new Map<string, string>()
     for (let i = 0; i < readyAmoebas.length; i++) {
       const result = actions[i]
       const amoeba = readyAmoebas[i]
@@ -115,16 +140,60 @@ export class CycleManager {
         action = result.value
       }
 
-      this.executeAction(amoeba, action)
+      outcomes.set(amoeba.amoebaId, this.executeAction(amoeba, action))
     }
 
     this.enemyAI.update(this.enemies, this.amoebas, this.poisons)
     this.applyPassiveEffects()
+
+    // Build per-amoeba feedback including passive effects
+    for (const amoeba of readyAmoebas) {
+      if (!amoeba.alive && !preActionEnergy.has(amoeba.amoebaId)) continue
+      const eBefore = preActionEnergy.get(amoeba.amoebaId) ?? amoeba.energy
+      const passiveLines: string[] = []
+      const pos = amoeba.positionCm
+      for (const poison of this.poisons) {
+        const dx = pos.x - poison.positionCm.x
+        const dy = pos.y - poison.positionCm.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (poison.isInRange(dist)) {
+          passiveLines.push(`Poison (${poison.poisonId}) is draining your energy.`)
+        }
+      }
+      for (const enemy of this.enemies) {
+        if (!enemy.alive) continue
+        const dx = pos.x - enemy.positionCm.x
+        const dy = pos.y - enemy.positionCm.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist <= AMOEBA_RADIUS_CM * ENEMY_DRAIN_RADIUS_MULTIPLIER) {
+          passiveLines.push(`Enemy (${enemy.enemyId}) is nearby and draining your energy.`)
+        }
+      }
+      if (!amoeba.alive) {
+        passiveLines.push('You have died! Energy reached 0.')
+      }
+      const outcome = outcomes.get(amoeba.amoebaId) ?? 'No action taken.'
+      const fullOutcome = passiveLines.length > 0
+        ? outcome + ' ' + passiveLines.join(' ')
+        : outcome
+      this.amoebaLastAction.set(amoeba.amoebaId, {
+        description: outcome.split(' — ')[0].replace(/\.$/, ''),
+        outcome: fullOutcome,
+        energyBefore: eBefore,
+      })
+    }
     this.applyPoisonFoodInteraction()
     this.applyDecay()
     this.removeDeadEntities()
+    this.cleanupAmoebaHistory()
     this.respawnItems()
     this.updateStats()
+
+    if (this.amoebas.length === 0) {
+      this.cycling = false
+      gameStore.stats.running = false
+      return
+    }
 
     this.scheduleNextCycle()
   }
@@ -145,15 +214,63 @@ export class CycleManager {
         this.poisons,
       )
 
-      messages = this.promptBuilder.buildMessages(
+      // Snapshot energy before this cycle's actions are applied
+      const energyNow = amoeba.energy
+
+      // Build fresh [system, user] for this cycle's state
+      const fresh = this.promptBuilder.buildMessages(
         settings.systemPrompt,
         amoeba.getState(),
         surroundings,
       )
+      const systemMsg = fresh[0]
+
+      // Prepend previous-action feedback to the user message
+      const lastAction = this.amoebaLastAction.get(amoeba.amoebaId)
+      let userContent = fresh[1].content
+      if (lastAction) {
+        const delta = energyNow - lastAction.energyBefore
+        const deltaStr = (delta >= 0 ? '+' : '') + delta.toFixed(1)
+        userContent =
+          `Result of previous action: ${lastAction.outcome} ` +
+          `Energy: ${lastAction.energyBefore.toFixed(1)} → ${energyNow.toFixed(1)} (${deltaStr})\n\n` +
+          userContent
+      }
+      const stateMsg: LLMMessage = { role: 'user', content: userContent }
+
+      // Prepend past conversation so the LLM remembers prior decisions
+      const history = this.amoebaHistory.get(amoeba.amoebaId) ?? []
+      messages = [systemMsg, ...history, stateMsg]
 
       for (let attempt = 0; attempt <= CycleManager.MAX_RETRIES; attempt++) {
+        // Network/API errors propagate to the outer catch; parse errors are handled below
         const rawResponse = await this.llmClient.chat(settings, messages)
-        const action = this.responseParser.parse(rawResponse)
+
+        let action: AmoebaAction
+        let parseError: string | null = null
+        try {
+          action = this.responseParser.parse(rawResponse)
+        } catch (err) {
+          parseError = err instanceof Error ? err.message : String(err)
+          action = { action: 'idle' }
+        }
+
+        if (parseError) {
+          // Invalid response format — log and retry immediately with correction
+          gameStore.addLogEntry({
+            cycle: gameStore.stats.cycleCount,
+            amoebaId: amoeba.amoebaId,
+            action: 'rejected',
+            details: `invalid response: ${parseError}`,
+            promptMessages: [...messages],
+            rawResponse,
+          })
+          if (attempt < CycleManager.MAX_RETRIES) {
+            messages.push({ role: 'assistant', content: rawResponse })
+            messages.push({ role: 'user', content: `Your response was invalid: ${parseError}. Please respond with a valid JSON action object.` })
+          }
+          continue
+        }
 
         const rejection = this.validateAction(amoeba, action)
         if (!rejection) {
@@ -166,15 +283,23 @@ export class CycleManager {
             promptMessages: [...messages],
             rawResponse,
           })
+
+          // Save only the clean (state → accepted response) exchange to history
+          const updated = [...history, stateMsg, { role: 'assistant' as const, content: rawResponse }]
+          this.amoebaHistory.set(
+            amoeba.amoebaId,
+            updated.slice(-CycleManager.MAX_HISTORY_MESSAGES),
+          )
+
           return action
         }
 
-        // Log the rejected attempt
+        // Game-logic rejection — log and retry with correction
         gameStore.addLogEntry({
           cycle: gameStore.stats.cycleCount,
           amoebaId: amoeba.amoebaId,
           action: 'rejected',
-          details: `${action.action}: ${rejection}`,
+          details: rejection,
           promptMessages: [...messages],
           rawResponse,
         })
@@ -210,21 +335,30 @@ export class CycleManager {
   private validateAction(amoeba: Amoeba, action: AmoebaAction): string | null {
     if (action.action === 'feed') {
       const pos = amoeba.positionCm
-      const canFeed = this.foods.some((food) => {
-        if (food.depleted) return false
+      let nearestFoodDist = Infinity
+      let canFeed = false
+      for (const food of this.foods) {
+        if (food.depleted) continue
         const dx = pos.x - food.positionCm.x
         const dy = pos.y - food.positionCm.y
         const dist = Math.sqrt(dx * dx + dy * dy)
-        return dist <= food.effectiveHaloRadiusCm && food.getEnergyAtDistance(dist) >= 1
-      })
+        if (dist < nearestFoodDist) nearestFoodDist = dist
+        if (dist <= food.effectiveHaloRadiusCm && food.getEnergyAtDistance(dist) >= 1) {
+          canFeed = true
+          break
+        }
+      }
       if (!canFeed) {
-        return 'You cannot feed here — your center is not within any food halo. You must move closer to a food source first. Choose a different action.'
+        if (nearestFoodDist === Infinity) {
+          return 'Feeding failed — no food exists on the map. Choose a different action.'
+        }
+        return `Feeding failed — nearest food is ${nearestFoodDist.toFixed(4)} cm away, which is out of range. Move closer to feed.`
       }
     }
 
     if (action.action === 'divide') {
       if (amoeba.energy < DIVISION_ENERGY_THRESHOLD) {
-        return `You cannot divide — your energy is ${amoeba.energy.toFixed(1)} but you need at least ${DIVISION_ENERGY_THRESHOLD}. Choose a different action.`
+        return `Division failed — energy is ${amoeba.energy.toFixed(1)} but need at least ${DIVISION_ENERGY_THRESHOLD}. Choose a different action.`
       }
     }
 
@@ -233,8 +367,10 @@ export class CycleManager {
 
   private formatActionDetails(action: AmoebaAction): string | undefined {
     switch (action.action) {
-      case 'move':
-        return `dir ${action.direction}, dist ${action.distance}`
+      case 'move': {
+        const label = HEX_DIRECTIONS[action.direction]?.label ?? String(action.direction)
+        return `${label}, dist ${action.distance}`
+      }
       case 'feed':
       case 'divide':
       case 'idle':
@@ -242,35 +378,40 @@ export class CycleManager {
     }
   }
 
-  private executeAction(amoeba: Amoeba, action: AmoebaAction): void {
+  private executeAction(amoeba: Amoeba, action: AmoebaAction): string {
     switch (action.action) {
-      case 'move':
+      case 'move': {
+        const label = HEX_DIRECTIONS[action.direction]?.label ?? String(action.direction)
+        const cost = (action.distance * MOVE_ENERGY_COST_PER_BODY_LENGTH).toFixed(1)
         amoeba.applyAction(action)
-        break
+        return `Moved ${label} ${action.distance} body-lengths (cost ${cost} energy).`
+      }
 
       case 'feed':
-        this.handleFeeding(amoeba)
-        break
+        return this.handleFeeding(amoeba)
 
       case 'divide':
-        this.handleDivision(amoeba)
-        break
+        return this.handleDivision(amoeba)
 
       case 'idle':
-        break
+        return 'Stayed idle — no action taken.'
     }
   }
 
-  private handleFeeding(amoeba: Amoeba): void {
+  private handleFeeding(amoeba: Amoeba): string {
     const pos = amoeba.positionCm
     let bestFood: FoodItem | null = null
     let bestEnergy = 0
+    let nearestFoodDist = Infinity
 
     for (const food of this.foods) {
       if (food.depleted) continue
       const dx = pos.x - food.positionCm.x
       const dy = pos.y - food.positionCm.y
       const dist = Math.sqrt(dx * dx + dy * dy)
+
+      if (dist < nearestFoodDist) nearestFoodDist = dist
+
       if (dist <= food.effectiveHaloRadiusCm) {
         const energyHere = food.getEnergyAtDistance(dist)
         if (energyHere >= 1 && energyHere > bestEnergy) {
@@ -282,16 +423,27 @@ export class CycleManager {
 
     if (bestFood) {
       const consumed = bestFood.consumeEnergy()
-      amoeba.addEnergy(consumed * FEEDING_GAIN_PER_CYCLE)
+      const gained = consumed * FEEDING_GAIN_PER_CYCLE
+      amoeba.addEnergy(gained)
+      return `Fed successfully — gained ${gained.toFixed(1)} energy from ${bestFood.foodId}.`
     }
+
+    if (nearestFoodDist === Infinity) {
+      return 'Feeding failed — no food exists on the map.'
+    }
+    return `Feeding failed — nearest food is ${nearestFoodDist.toFixed(4)} cm away, which is out of range. Move closer to feed.`
   }
 
-  private handleDivision(amoeba: Amoeba): void {
-    if (!amoeba.canDivide()) return
+  private handleDivision(amoeba: Amoeba): string {
+    if (!amoeba.canDivide()) {
+      return `Division failed — energy is ${amoeba.energy.toFixed(1)} but need at least ${DIVISION_ENERGY_THRESHOLD}. Choose a different action.`
+    }
     const child = amoeba.divide()
     if (child) {
       this.amoebas.push(child)
+      return `Divided successfully — created ${child.amoebaId}. Each child has half the parent's energy.`
     }
+    return 'Division failed unexpectedly.'
   }
 
   private applyPoisonFoodInteraction(): void {
@@ -360,14 +512,14 @@ export class CycleManager {
   }
 
   private respawnItems(): void {
-    const cycle = gameStore.stats.cycleCount
-
-    if (cycle % FOOD_RESPAWN_INTERVAL_CYCLES === 0 && this.foods.length < INITIAL_FOOD_COUNT) {
+    while (this.foods.length < INITIAL_FOOD_COUNT) {
       this.spawnRandomFood()
     }
-
-    if (cycle % POISON_RESPAWN_INTERVAL_CYCLES === 0 && this.poisons.length < INITIAL_POISON_COUNT) {
+    while (this.poisons.length < INITIAL_POISON_COUNT) {
       this.spawnRandomPoison()
+    }
+    while (this.enemies.length < INITIAL_ENEMY_COUNT) {
+      this.spawnRandomEnemy()
     }
   }
 
@@ -391,18 +543,45 @@ export class CycleManager {
     this.poisons.push(poison)
   }
 
+  private spawnRandomEnemy(): void {
+    let x: number, y: number
+    do {
+      x = rng() * WORLD_WIDTH_CM
+      y = rng() * WORLD_HEIGHT_CM
+    } while (
+      Math.sqrt(
+        (x - WORLD_WIDTH_CM / 2) ** 2 + (y - WORLD_HEIGHT_CM / 2) ** 2,
+      ) < MIN_ENEMY_SPAWN_DISTANCE_CM
+    )
+    const enemy = new Enemy(this.scene, cmToPx(x), cmToPx(y))
+    this.enemies.push(enemy)
+  }
+
+  private cleanupAmoebaHistory(): void {
+    const activeIds = new Set(this.amoebas.map((a) => a.amoebaId))
+    for (const id of this.amoebaHistory.keys()) {
+      if (!activeIds.has(id)) this.amoebaHistory.delete(id)
+    }
+    for (const id of this.amoebaLastAction.keys()) {
+      if (!activeIds.has(id)) this.amoebaLastAction.delete(id)
+    }
+  }
+
   private updateStats(): void {
-    gameStore.stats.amoebaCount = this.amoebas.filter((a) => a.alive).length
+    const alive = this.amoebas.filter((a) => a.alive)
+    gameStore.stats.amoebaCount = alive.length
     gameStore.stats.foodCount = this.foods.filter((f) => !f.depleted).length
     gameStore.stats.enemyCount = this.enemies.filter((e) => e.alive).length
     gameStore.stats.poisonCount = this.poisons.length
 
+    gameStore.stats.amoebas = alive.map((a) => ({ id: a.amoebaId, energy: a.energy }))
+
     const selected = gameStore.selectedAmoebaId
     if (selected) {
-      const sel = this.amoebas.find((a) => a.amoebaId === selected && a.alive)
+      const sel = alive.find((a) => a.amoebaId === selected)
       gameStore.stats.selectedAmoebaEnergy = sel?.energy ?? 0
-    } else if (this.amoebas.length > 0) {
-      gameStore.stats.selectedAmoebaEnergy = this.amoebas[0]?.energy ?? 0
+    } else if (alive.length > 0) {
+      gameStore.stats.selectedAmoebaEnergy = alive[0].energy
     }
   }
 }

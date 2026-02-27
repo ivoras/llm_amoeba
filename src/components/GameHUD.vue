@@ -2,17 +2,6 @@
 import { computed } from 'vue'
 import { gameStore } from '@/stores/gameStore'
 
-const energyPercent = computed(() =>
-  Math.max(0, Math.min(100, gameStore.stats.selectedAmoebaEnergy)),
-)
-
-const energyColor = computed(() => {
-  const e = energyPercent.value
-  if (e >= 60) return 'var(--success)'
-  if (e >= 30) return 'var(--warning)'
-  return 'var(--danger)'
-})
-
 const statusText = computed(() =>
   gameStore.stats.running ? 'RUNNING' : 'PAUSED',
 )
@@ -20,6 +9,21 @@ const statusText = computed(() =>
 const statusColor = computed(() =>
   gameStore.stats.running ? 'var(--success)' : 'var(--text-secondary)',
 )
+
+function energyPercent(energy: number): number {
+  return Math.max(0, Math.min(100, energy))
+}
+
+function energyColor(energy: number): string {
+  if (energy >= 60) return 'var(--success)'
+  if (energy >= 30) return 'var(--warning)'
+  return 'var(--danger)'
+}
+
+function shortId(id: string): string {
+  // "amoeba-3" → "A3"
+  return id.replace('amoeba-', 'A')
+}
 </script>
 
 <template>
@@ -30,15 +34,21 @@ const statusColor = computed(() =>
       <span class="hud-value">{{ gameStore.stats.cycleCount }}</span>
     </div>
 
-    <div class="hud-row">
-      <span class="hud-label">Energy</span>
-      <div class="energy-bar-bg">
-        <div
-          class="energy-bar-fill"
-          :style="{ width: energyPercent + '%', background: energyColor }"
-        />
+    <div class="amoeba-list">
+      <div
+        v-for="a in gameStore.stats.amoebas"
+        :key="a.id"
+        class="amoeba-row"
+      >
+        <span class="amoeba-label">{{ shortId(a.id) }}</span>
+        <div class="energy-bar-bg">
+          <div
+            class="energy-bar-fill"
+            :style="{ width: energyPercent(a.energy) + '%', background: energyColor(a.energy) }"
+          />
+        </div>
+        <span class="hud-value energy-num">{{ a.energy.toFixed(1) }}</span>
       </div>
-      <span class="hud-value energy-num">{{ gameStore.stats.selectedAmoebaEnergy.toFixed(1) }}</span>
     </div>
 
     <div class="hud-stats">
@@ -76,7 +86,7 @@ const statusColor = computed(() =>
   gap: 8px;
   pointer-events: none;
   z-index: 10;
-  min-width: 200px;
+  min-width: 220px;
   backdrop-filter: blur(6px);
 }
 
@@ -107,9 +117,30 @@ const statusColor = computed(() =>
   margin-right: auto;
 }
 
+.amoeba-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.amoeba-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amoeba-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 26px;
+}
+
 .energy-bar-bg {
   flex: 1;
-  height: 8px;
+  height: 7px;
   background: var(--bg-tertiary);
   border-radius: 4px;
   overflow: hidden;
@@ -122,7 +153,10 @@ const statusColor = computed(() =>
 }
 
 .energy-num {
-  min-width: 42px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 38px;
   text-align: right;
 }
 

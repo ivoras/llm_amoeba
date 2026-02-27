@@ -68,7 +68,10 @@ function resetDefaults() {
     </section>
 
     <section class="section">
-      <h3 class="section-title">System Prompt</h3>
+      <div class="section-header">
+        <h3 class="section-title">System Prompt</h3>
+        <button class="btn-small" @click="gameStore.resetSystemPrompt()">Reset to default</button>
+      </div>
       <div class="field">
         <textarea
           id="system-prompt"
@@ -116,7 +119,7 @@ function resetDefaults() {
     </section>
 
     <section class="section">
-      <button @click="resetDefaults">Reset to Defaults</button>
+      <button @click="resetDefaults">Reset everything to Defaults</button>
     </section>
   </div>
 </template>
@@ -135,6 +138,33 @@ function resetDefaults() {
 
 .section {
   margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-header .section-title {
+  margin-bottom: 0;
+}
+
+.btn-small {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-small:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
 }
 
 .section-title {
