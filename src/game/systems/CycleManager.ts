@@ -245,7 +245,13 @@ export class CycleManager {
 
       for (let attempt = 0; attempt <= CycleManager.MAX_RETRIES; attempt++) {
         // Network/API errors propagate to the outer catch; parse errors are handled below
-        const rawResponse = await this.llmClient.chat(settings, messages)
+        const { content: rawResponse, usage } = await this.llmClient.chat(settings, messages)
+        if (usage?.prompt_tokens != null || usage?.completion_tokens != null) {
+          gameStore.addTokenUsage(
+            usage.prompt_tokens ?? 0,
+            usage.completion_tokens ?? 0,
+          )
+        }
 
         let action: AmoebaAction
         let parseError: string | null = null

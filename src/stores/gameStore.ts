@@ -77,6 +77,8 @@ export const gameStore = reactive({
     selectedAmoebaEnergy: 50,
     amoebas: [] as AmoebaHUDInfo[],
     running: false,
+    promptTokens: 0,
+    generatedTokens: 0,
   } as GameStats,
 
   selectedAmoebaId: null as string | null,
@@ -95,6 +97,11 @@ export const gameStore = reactive({
     if (this.llmLog.length > MAX_LOG_ENTRIES) {
       this.llmLog.shift()
     }
+  },
+
+  addTokenUsage(promptTokens: number, generatedTokens: number) {
+    this.stats.promptTokens += promptTokens
+    this.stats.generatedTokens += generatedTokens
   },
 
   clearLog() {

@@ -12,7 +12,7 @@ import {
   WORLD_HEIGHT_CM,
   MOVE_TWEEN_DURATION_MS,
   MOVE_ENERGY_COST_PER_BODY_LENGTH,
-  MAX_MOVE_BODY_LENGTHS,
+  ENEMY_MAX_MOVE_BODY_LENGTHS,
 } from '../constants'
 import type { EnemyState, Position } from '@/types'
 
@@ -124,7 +124,7 @@ export class Enemy extends Phaser.GameObjects.Graphics {
       return
     }
 
-    const maxDistPx = MAX_MOVE_BODY_LENGTHS * AMOEBA_RADIUS_PX * 2
+    const maxDistPx = ENEMY_MAX_MOVE_BODY_LENGTHS * AMOEBA_RADIUS_PX * 2
     const moveDist = Math.min(dist, maxDistPx)
     const ratio = moveDist / dist
 

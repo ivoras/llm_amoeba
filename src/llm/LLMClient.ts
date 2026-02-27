@@ -1,4 +1,4 @@
-import type { LLMChatRequest, LLMChatResponse, LLMMessage, LLMSettings } from '@/types'
+import type { LLMChatRequest, LLMChatResponse, LLMUsage, LLMMessage, LLMSettings } from '@/types'
 
 const REASONING_MODEL_PATTERNS = [
   /\bo[1-9]\b/, /\bo[1-9][-_]/, // o1, o3, o3-mini, etc.
@@ -32,7 +32,7 @@ export class LLMClient {
   async chat(
     settings: LLMSettings,
     messages: LLMMessage[],
-  ): Promise<string> {
+  ): Promise<{ content: string; usage?: LLMUsage }> {
     const url = `${settings.apiUrl.replace(/\/+$/, '')}/chat/completions`
 
     const reasoning = isReasoningModel(settings.model)
@@ -66,6 +66,9 @@ export class LLMClient {
       throw new Error('LLM returned no choices')
     }
 
-    return data.choices[0].message.content
+    return {
+      content: data.choices[0].message.content,
+      usage: data.usage,
+    }
   }
 }

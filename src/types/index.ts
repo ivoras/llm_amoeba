@@ -96,12 +96,19 @@ export interface LLMChatRequest {
   }
 }
 
+export interface LLMUsage {
+  prompt_tokens?: number
+  completion_tokens?: number
+  total_tokens?: number
+}
+
 export interface LLMChatResponse {
   choices: {
     message: {
       content: string
     }
   }[]
+  usage?: LLMUsage
 }
 
 export interface AmoebaHUDInfo {
@@ -118,6 +125,8 @@ export interface GameStats {
   selectedAmoebaEnergy: number
   amoebas: AmoebaHUDInfo[]
   running: boolean
+  promptTokens: number
+  generatedTokens: number
 }
 
 export interface LLMLogEntry {

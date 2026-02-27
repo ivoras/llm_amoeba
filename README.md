@@ -2,6 +2,8 @@
 
 **Can an AI keep a single-celled organism alive?**
 
+> **Tip:** This game is best run on a local LLM — it spends a lot of tokens. Each cycle sends full prompts and conversation history for every amoeba, so token usage grows quickly with multiple amoebas and long runs.
+
 LLM Amoeba is a browser-based experiment that puts a large language model in control of a virtual amoeba. The amoeba lives on a simulated microscopic surface — 5 cm by 5 cm of terrain filled with food, poison, and predators. Every few seconds the game sends what the amoeba "sees" to an LLM, and the model decides what to do: move, eat, or reproduce. You watch what happens.
 
 It's part game, part simulation, part AI stress test. Some models will thrive. Others will walk straight into poison. The fun is in finding out.

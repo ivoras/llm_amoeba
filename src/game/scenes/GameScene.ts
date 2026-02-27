@@ -133,6 +133,8 @@ export class GameScene extends Phaser.Scene {
     this.cycleManager.clearHistory()
     gameStore.stats.running = false
     gameStore.stats.cycleCount = 0
+    gameStore.stats.promptTokens = 0
+    gameStore.stats.generatedTokens = 0
     gameStore.clearLog()
 
     for (const a of this.amoebas) a.destroy()

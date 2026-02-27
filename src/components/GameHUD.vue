@@ -69,6 +69,13 @@ function shortId(id: string): string {
         <span>{{ gameStore.stats.enemyCount }} enem{{ gameStore.stats.enemyCount !== 1 ? 'ies' : 'y' }}</span>
       </div>
     </div>
+
+    <div class="token-box">
+      <span class="hud-label">Tokens ({{ gameStore.llmSettings.model }})</span>
+      <span class="token-values">
+        {{ gameStore.stats.promptTokens.toLocaleString() }} in / {{ gameStore.stats.generatedTokens.toLocaleString() }} out
+      </span>
+    </div>
   </div>
 </template>
 
@@ -184,4 +191,19 @@ function shortId(id: string): string {
 .food-dot   { background: #44cc44; }
 .poison-dot { background: #aa22cc; }
 .enemy-dot  { background: #cc2222; }
+
+.token-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 2px;
+}
+
+.token-values {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
 </style>
