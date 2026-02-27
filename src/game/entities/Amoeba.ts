@@ -22,10 +22,13 @@ import { gameStore } from '@/stores/gameStore'
 
 let nextId = 0
 
+const PASTEL_YELLOW = 0xfff8c8  // RGB(255, 248, 200)
+
 export class Amoeba extends Phaser.GameObjects.Graphics {
   public amoebaId: string
   public energy: number
   public alive: boolean = true
+  public feeding: boolean = false
 
   private wobbleTime: number = 0
   private wobbleOffsets: number[]
@@ -76,17 +79,21 @@ export class Amoeba extends Phaser.GameObjects.Graphics {
   private drawShape(): void {
     this.clear()
 
-    const energyRatio = this.energy / MAX_ENERGY
-    const green = Math.floor(150 + 105 * energyRatio)
-    // Pulse between green (30, green, 60) and yellow (255, 255, 0)
-    const t = 0.5 + 0.5 * Math.sin(this.wobbleTime * (4 / 3))
-    const r = Math.round(30 + (255 - 30) * t)
-    const g = Math.round(green + (255 - green) * t)
-    const b = Math.round(60 + (0 - 60) * t)
-    const color = Phaser.Display.Color.GetColor(r, g, b)
+    let color: number
+    if (this.feeding) {
+      const energyRatio = this.energy / MAX_ENERGY
+      const green = Math.floor(150 + 105 * energyRatio)
+      const t = 0.5 + 0.5 * Math.sin(this.wobbleTime * (4 / 3))
+      const r = Math.round(30 + (255 - 30) * t)
+      const g = Math.round(green + (255 - green) * t)
+      const b = Math.round(60 + (0 - 60) * t)
+      color = Phaser.Display.Color.GetColor(r, g, b)
+    } else {
+      color = PASTEL_YELLOW
+    }
 
-    this.fillStyle(color, 0.75)
-    this.lineStyle(1.5, 0x1a6b1a, 0.9)
+    this.fillStyle(color, 0.5)
+    this.lineStyle(1.5, 0x1a6b1a, 0.5)
 
     this.beginPath()
     for (let i = 0; i <= WOBBLE_SEGMENTS; i++) {
@@ -107,7 +114,7 @@ export class Amoeba extends Phaser.GameObjects.Graphics {
     this.strokePath()
 
     // nucleus
-    this.fillStyle(0x0a3a0a, 0.5)
+    this.fillStyle(0x0a3a0a, 0.35)
     this.fillCircle(0, 0, AMOEBA_RADIUS_PX * 0.3)
 
     // vision radius — dashed circle (optional)
@@ -137,6 +144,10 @@ export class Amoeba extends Phaser.GameObjects.Graphics {
         this.moveInDirection(action.direction, action.distance, onComplete)
         break
       case 'feed':
+        this.feeding = true
+        this.scene.time.delayedCall(MOVE_TWEEN_DURATION_MS, () => {
+          this.feeding = false
+        })
         onComplete?.()
         break
       case 'divide':
