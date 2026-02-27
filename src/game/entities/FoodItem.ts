@@ -11,6 +11,10 @@ import { gameStore } from '@/stores/gameStore'
 
 let nextFoodId = 0
 
+export function resetFoodIds(): void {
+  nextFoodId = 0
+}
+
 export class FoodItem extends Phaser.GameObjects.Graphics {
   public foodId: string
   public radiusCm: number

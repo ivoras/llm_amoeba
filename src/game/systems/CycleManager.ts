@@ -136,6 +136,8 @@ export class CycleManager {
 
     const actions = await Promise.allSettled(actionPromises)
 
+    if (!this.cycling) return  // Reset occurred while LLM was responding; bail out
+
     // Snapshot energy before executing, so we can measure effects
     const preActionEnergy = new Map<string, number>()
     for (const amoeba of readyAmoebas) {

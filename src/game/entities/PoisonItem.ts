@@ -11,6 +11,10 @@ import { gameStore } from '@/stores/gameStore'
 
 let nextPoisonId = 0
 
+export function resetPoisonIds(): void {
+  nextPoisonId = 0
+}
+
 export class PoisonItem extends Phaser.GameObjects.Graphics {
   public poisonId: string
   public radiusCm: number

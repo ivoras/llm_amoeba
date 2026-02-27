@@ -18,6 +18,10 @@ import type { EnemyState, Position } from '@/types'
 
 let nextEnemyId = 0
 
+export function resetEnemyIds(): void {
+  nextEnemyId = 0
+}
+
 export class Enemy extends Phaser.GameObjects.Graphics {
   public enemyId: string
   public energy: number

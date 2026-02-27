@@ -22,6 +22,10 @@ import { gameStore } from '@/stores/gameStore'
 
 let nextId = 0
 
+export function resetAmoebaIds(): void {
+  nextId = 0
+}
+
 const PASTEL_YELLOW = 0xfff8c8  // RGB(255, 248, 200)
 
 export class Amoeba extends Phaser.GameObjects.Graphics {

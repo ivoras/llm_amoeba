@@ -19,11 +19,11 @@ import {
   MIN_ENEMY_SPAWN_DISTANCE_CM,
   PIXELS_PER_CM,
 } from '../constants'
-import { Amoeba } from '../entities/Amoeba'
-import { Enemy } from '../entities/Enemy'
-import { FoodItem } from '../entities/FoodItem'
-import { PoisonItem } from '../entities/PoisonItem'
-import { Tombstone } from '../entities/Tombstone'
+import { Amoeba, resetAmoebaIds } from '../entities/Amoeba'
+import { Enemy, resetEnemyIds } from '../entities/Enemy'
+import { FoodItem, resetFoodIds } from '../entities/FoodItem'
+import { PoisonItem, resetPoisonIds } from '../entities/PoisonItem'
+import { Tombstone, resetTombstoneIds } from '../entities/Tombstone'
 import { CycleManager } from '../systems/CycleManager'
 import { CameraController } from '../CameraController'
 import { registerScene } from '../PhaserGame'
@@ -137,6 +137,11 @@ export class GameScene extends Phaser.Scene {
   resetGame(): void {
     this.cycleManager.stop()
     this.cycleManager.clearHistory()
+    resetAmoebaIds()
+    resetEnemyIds()
+    resetFoodIds()
+    resetPoisonIds()
+    resetTombstoneIds()
     gameStore.stats.running = false
     gameStore.stats.cycleCount = 0
     gameStore.stats.promptTokens = 0
