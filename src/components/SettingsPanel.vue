@@ -54,17 +54,6 @@ function resetDefaults() {
           v-model.number="gameStore.llmSettings.temperature"
         />
       </div>
-
-      <div class="field">
-        <label for="max-tokens">Max Tokens</label>
-        <input
-          id="max-tokens"
-          type="number"
-          min="50"
-          max="2000"
-          v-model.number="gameStore.llmSettings.maxTokens"
-        />
-      </div>
     </section>
 
     <section class="section">
