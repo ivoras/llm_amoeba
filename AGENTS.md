@@ -15,7 +15,7 @@ change. "Major" includes:
 - New visual indicators or debug tools
 - Any change that would make this document inaccurate if left unchanged
 
-**App version** (`src/version.ts`): Increment the `APP_VERSION` constant whenever a large feature is completed.
+**App version** (`src/version.ts`): Increment the `APP_VERSION` constant before each commit. Do this as part of the same change, not as a separate commit.
 
 When in doubt, update the doc.
 
