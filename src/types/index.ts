@@ -76,6 +76,9 @@ export interface GameSettings {
   cycleIntervalMs: number
   showDebugOverlays: boolean
   randomSeed: number
+  initialFoodCount: number
+  initialPoisonCount: number
+  initialEnemyCount: number
 }
 
 export interface LLMMessage {

@@ -20,6 +20,7 @@ function resetDefaults() {
           type="text"
           v-model="gameStore.llmSettings.apiUrl"
           placeholder="https://api.openai.com/v1"
+          :disabled="gameStore.stats.running"
         />
       </div>
 
@@ -30,6 +31,7 @@ function resetDefaults() {
           type="password"
           v-model="gameStore.llmSettings.apiKey"
           placeholder="sk-..."
+          :disabled="gameStore.stats.running"
         />
       </div>
 
@@ -40,6 +42,7 @@ function resetDefaults() {
           type="text"
           v-model="gameStore.llmSettings.model"
           placeholder="gpt-4o-mini"
+          :disabled="gameStore.stats.running"
         />
       </div>
 
@@ -52,6 +55,7 @@ function resetDefaults() {
           max="2"
           step="0.05"
           v-model.number="gameStore.llmSettings.temperature"
+          :disabled="gameStore.stats.running"
         />
       </div>
 
@@ -60,6 +64,7 @@ function resetDefaults() {
         <select
           id="response-format"
           v-model="gameStore.llmSettings.responseFormatType"
+          :disabled="gameStore.stats.running"
         >
           <option value="json_object">JSON object (flexible)</option>
           <option value="json_schema">JSON schema (strict)</option>
@@ -71,19 +76,66 @@ function resetDefaults() {
     <section class="section">
       <div class="section-header">
         <h3 class="section-title">System Prompt</h3>
-        <button class="btn-small" @click="gameStore.resetSystemPrompt()">Reset to default</button>
+        <button
+          class="btn-small"
+          :disabled="gameStore.stats.running"
+          @click="gameStore.resetSystemPrompt()"
+        >Reset to default</button>
       </div>
       <div class="field">
         <textarea
           id="system-prompt"
           rows="10"
           v-model="gameStore.llmSettings.systemPrompt"
+          :disabled="gameStore.stats.running"
         />
       </div>
     </section>
 
     <section class="section">
       <h3 class="section-title">Game Settings</h3>
+      <div class="field">
+        <label for="initial-food">
+          Initial Food Count
+          <span class="field-hint">(applies on reset)</span>
+        </label>
+        <input
+          id="initial-food"
+          type="number"
+          min="0"
+          max="200"
+          step="1"
+          v-model.number="gameStore.gameSettings.initialFoodCount"
+        />
+      </div>
+      <div class="field">
+        <label for="initial-poison">
+          Initial Poison Count
+          <span class="field-hint">(applies on reset)</span>
+        </label>
+        <input
+          id="initial-poison"
+          type="number"
+          min="0"
+          max="50"
+          step="1"
+          v-model.number="gameStore.gameSettings.initialPoisonCount"
+        />
+      </div>
+      <div class="field">
+        <label for="initial-enemies">
+          Initial Enemy Count
+          <span class="field-hint">(applies on reset)</span>
+        </label>
+        <input
+          id="initial-enemies"
+          type="number"
+          min="0"
+          max="50"
+          step="1"
+          v-model.number="gameStore.gameSettings.initialEnemyCount"
+        />
+      </div>
       <div class="field">
         <label for="cycle-interval">Cycle Interval (ms): {{ gameStore.gameSettings.cycleIntervalMs }}</label>
         <input
@@ -217,5 +269,17 @@ function resetDefaults() {
 .field-checkbox label {
   margin-bottom: 0;
   cursor: pointer;
+}
+
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-small:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

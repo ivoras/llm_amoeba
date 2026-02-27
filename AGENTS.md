@@ -15,6 +15,8 @@ change. "Major" includes:
 - New visual indicators or debug tools
 - Any change that would make this document inaccurate if left unchanged
 
+**App version** (`src/version.ts`): Increment the `APP_VERSION` constant whenever a large feature is completed.
+
 When in doubt, update the doc.
 
 ## Overview
@@ -36,7 +38,7 @@ feed, avoid hazards, and (ideally) accumulate enough energy to divide.
 
 ```
 Vue App (App.vue)
-├── SettingsPanel.vue        LLM configuration, game controls
+├── SettingsPanel.vue        LLM config, game controls (LLM fields disabled while running)
 ├── GameHUD.vue              Energy/cycle/amoeba-count overlay
 ├── LLMLogPanel.vue          Per-cycle LLM decision log with raw prompt/response modal
 └── GameView.vue             Mounts Phaser canvas
@@ -243,9 +245,7 @@ All debug overlays are toggled together via **Settings → Show debug overlays**
 ## Initial Spawn Defaults
 
 - 1 player amoeba at world center (2.5, 2.5)
-- 50 food items at random positions
-- 15 poison items at random positions
-- 10 enemies at random positions (minimum distance from center)
+- Food, poison, and enemy counts are configurable in Settings (defaults: 50 food, 15 poison, 10 enemies). Changes apply on game reset.
 - Respawn: immediate — entity counts are kept constant (depleted/dead items are replaced each cycle)
 
 ## File Map
@@ -253,6 +253,7 @@ All debug overlays are toggled together via **Settings → Show debug overlays**
 ```
 src/
   main.ts                     Vue bootstrap
+  version.ts                  App version constant
   App.vue                     Root layout
   style.css                   Global styles
   components/

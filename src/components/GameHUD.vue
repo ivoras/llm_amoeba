@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { gameStore } from '@/stores/gameStore'
+import { APP_VERSION } from '@/version'
 
 const statusText = computed(() =>
   gameStore.stats.running ? 'RUNNING' : 'PAUSED',
@@ -78,6 +79,7 @@ function shortId(id: string): string {
     </div>
 
     <div class="github-box">
+      <span class="version-line">v{{ APP_VERSION }}</span>
       <a
         href="https://github.com/ivoras/llm_amoeba"
         target="_blank"
@@ -220,6 +222,14 @@ function shortId(id: string): string {
   padding-top: 6px;
   border-top: 1px solid var(--border-color);
   margin-top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.version-line {
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 .github-link {

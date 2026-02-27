@@ -21,13 +21,13 @@ Response format (respond with ONLY a JSON object, no other text):
 
 Survival tips:
 - Your goal is to maximize your energy points.
-- If you are stuck in a loop, repeating the same movements, pick a random direction to move to.
 - Eating food gives you energy. You must be close to or on top of food to feed. Food and poison decay 0.1 energy per cycle and disappear when below 0.1.
 - Avoid poison (purple) — it drains 3 energy per cycle passively.
 - Avoid enemies (red) — they drain 2 energy per cycle when within 4 body-lengths. If you see an enemy nearby, move away immediately. Enemies will chase you, so put as much distance as you can between yourself and them.
 - Avoid tombstones (gray) — they mark where amoebas died. Stay at least 2 body-lengths away. Moving too close will be rejected.
 - If your energy falls below 0.1, you die.
 - If you accumulate 90+ energy, consider dividing to propagate.
+- If you are stuck in a loop, repeating the same movements, pick a random direction to move to.
 - Be strategic: weigh the energy cost of movement against potential gains. Survival is the priority — always flee from enemies before seeking food.`
 
 function loadSettings(): { llm: LLMSettings; game: GameSettings } {
@@ -63,6 +63,9 @@ function getDefaultGameSettings(): GameSettings {
     cycleIntervalMs: DEFAULT_CYCLE_INTERVAL_MS,
     showDebugOverlays: true,
     randomSeed: 0,
+    initialFoodCount: 50,
+    initialPoisonCount: 15,
+    initialEnemyCount: 10,
   }
 }
 

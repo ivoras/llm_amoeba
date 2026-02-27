@@ -17,9 +17,6 @@ import {
   DIRECTIONS,
   cmToPx,
   pxToCm,
-  INITIAL_FOOD_COUNT,
-  INITIAL_POISON_COUNT,
-  INITIAL_ENEMY_COUNT,
   MIN_ENEMY_SPAWN_DISTANCE_CM,
   DIVISION_ENERGY_THRESHOLD,
   MOVE_ENERGY_COST_PER_BODY_LENGTH,
@@ -585,13 +582,13 @@ export class CycleManager {
   }
 
   private respawnItems(): void {
-    while (this.foods.length < INITIAL_FOOD_COUNT) {
+    while (this.foods.length < gameStore.gameSettings.initialFoodCount) {
       this.spawnRandomFood()
     }
-    while (this.poisons.length < INITIAL_POISON_COUNT) {
+    while (this.poisons.length < gameStore.gameSettings.initialPoisonCount) {
       this.spawnRandomPoison()
     }
-    while (this.enemies.length < INITIAL_ENEMY_COUNT) {
+    while (this.enemies.length < gameStore.gameSettings.initialEnemyCount) {
       this.spawnRandomEnemy()
     }
   }

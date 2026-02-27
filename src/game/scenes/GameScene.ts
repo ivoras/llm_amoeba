@@ -5,9 +5,6 @@ import {
   WORLD_WIDTH_CM,
   WORLD_HEIGHT_CM,
   cmToPx,
-  INITIAL_FOOD_COUNT,
-  INITIAL_POISON_COUNT,
-  INITIAL_ENEMY_COUNT,
   MIN_FOOD_RADIUS_CM,
   MAX_FOOD_RADIUS_CM,
   FOOD_MIN_ENERGY,
@@ -205,7 +202,7 @@ export class GameScene extends Phaser.Scene {
     const amoeba = new Amoeba(this, centerX, centerY)
     this.amoebas.push(amoeba)
 
-    for (let i = 0; i < INITIAL_FOOD_COUNT; i++) {
+    for (let i = 0; i < gameStore.gameSettings.initialFoodCount; i++) {
       const x = rng() * WORLD_WIDTH_CM
       const y = rng() * WORLD_HEIGHT_CM
       const radius =
@@ -216,7 +213,7 @@ export class GameScene extends Phaser.Scene {
       this.foods.push(food)
     }
 
-    for (let i = 0; i < INITIAL_POISON_COUNT; i++) {
+    for (let i = 0; i < gameStore.gameSettings.initialPoisonCount; i++) {
       const x = rng() * WORLD_WIDTH_CM
       const y = rng() * WORLD_HEIGHT_CM
       const radius =
@@ -227,7 +224,7 @@ export class GameScene extends Phaser.Scene {
       this.poisons.push(poison)
     }
 
-    for (let i = 0; i < INITIAL_ENEMY_COUNT; i++) {
+    for (let i = 0; i < gameStore.gameSettings.initialEnemyCount; i++) {
       let x: number, y: number
       do {
         x = rng() * WORLD_WIDTH_CM
