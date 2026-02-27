@@ -20,9 +20,10 @@ When in doubt, update the doc.
 ## Overview
 
 LLM Amoeba is a 2D browser game where a Large Language Model controls a virtual amoeba
-on a simulated microscopic surface. The game runs in discrete cycles; each cycle queries
-the LLM for a decision, then animates the result. The amoeba must feed, avoid hazards,
-and (ideally) accumulate enough energy to divide.
+on a simulated microscopic surface. The game runs in discrete cycles; each cycle sends
+LLM prompts in parallel for all living amoebas, processes and animates each result as it
+arrives, and ends when all actions (including move tweens) have finished. The amoeba must
+feed, avoid hazards, and (ideally) accumulate enough energy to divide.
 
 ## Tech Stack
 
@@ -212,7 +213,14 @@ cleared. History is also cleared on game reset.
 The bottom panel shows a per-cycle log of every LLM decision. Each entry has
 a **{}** button that opens a modal showing the raw prompt messages and the raw
 LLM response for that cycle. Rejected entries also show a **?** button that
-displays only the raw invalid LLM response.
+displays only the raw invalid LLM response. Cycle numbers are sequential with no gaps.
+
+### Cycle Flow
+1. **Cycle start**: Prompts are sent to the LLM in parallel for all living, non-moving amoebas.
+2. **As each result arrives**: The action is validated, executed immediately, and the animation updated.
+3. **Feeding animation**: When an amoeba feeds or an enemy drains, the feeding animation is shown.
+4. **Cycle end**: When all amoeba actions (including move tweens) have finished, EnemyAI runs, passive effects (poison, enemy drain) are applied, decay/respawn/cleanup occur.
+5. **Minimum duration**: If elapsed time is less than the user-specified cycle interval, the game waits the remainder before starting the next cycle.
 
 ## Visual Indicators
 

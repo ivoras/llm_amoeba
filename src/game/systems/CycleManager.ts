@@ -121,7 +121,7 @@ export class CycleManager {
     }, delay)
   }
 
-  private async runCycle(): Promise<void> {
+  private runCycle(): void {
     if (!this.cycling) return
     if (this.amoebas.length === 0) {
       this.stop()
@@ -131,43 +131,62 @@ export class CycleManager {
 
     const cycleStartTime = Date.now()
     gameStore.stats.cycleCount++
+    const cycleNumber = gameStore.stats.cycleCount
 
     const settings: LLMSettings = { ...gameStore.llmSettings }
 
     const readyAmoebas = this.amoebas.filter((a) => a.alive && !a.isMoving)
 
-    const actionPromises = readyAmoebas
-      .map((amoeba) => this.getAmoebaAction(amoeba, settings))
-
-    const actions = await Promise.allSettled(actionPromises)
-
-    if (!this.cycling) return  // Reset occurred while LLM was responding; bail out
-
-    // Snapshot energy before executing, so we can measure effects
-    const preActionEnergy = new Map<string, number>()
-    for (const amoeba of readyAmoebas) {
-      preActionEnergy.set(amoeba.amoebaId, amoeba.energy)
+    if (readyAmoebas.length === 0) {
+      this.runCycleEnd(cycleStartTime, readyAmoebas, new Map(), new Map())
+      return
     }
 
-    // Execute and collect outcome text
     const outcomes = new Map<string, string>()
-    for (let i = 0; i < readyAmoebas.length; i++) {
-      const result = actions[i]
-      const amoeba = readyAmoebas[i]
-      if (!amoeba.alive) continue
+    const preActionEnergy = new Map<string, number>()
+    let pendingCount = readyAmoebas.length
 
-      let action: AmoebaAction = { action: 'idle' }
-      if (result?.status === 'fulfilled') {
-        action = result.value
+    const onAmoebaComplete = (): void => {
+      pendingCount--
+      if (pendingCount === 0 && this.cycling) {
+        this.runCycleEnd(cycleStartTime, readyAmoebas, outcomes, preActionEnergy)
       }
-
-      outcomes.set(amoeba.amoebaId, this.executeAction(amoeba, action))
     }
+
+    for (const amoeba of readyAmoebas) {
+      this.getAmoebaAction(amoeba, settings, cycleNumber)
+        .then((action) => {
+          if (!this.cycling) return
+          if (!amoeba.alive) {
+            onAmoebaComplete()
+            return
+          }
+          preActionEnergy.set(amoeba.amoebaId, amoeba.energy)
+          this.executeAction(amoeba, action, (outcome) => {
+            outcomes.set(amoeba.amoebaId, outcome)
+            onAmoebaComplete()
+          })
+        })
+        .catch(() => {
+          if (!this.cycling) return
+          preActionEnergy.set(amoeba.amoebaId, amoeba.energy)
+          outcomes.set(amoeba.amoebaId, 'Stayed idle — no action taken.')
+          onAmoebaComplete()
+        })
+    }
+  }
+
+  private runCycleEnd(
+    cycleStartTime: number,
+    readyAmoebas: Amoeba[],
+    outcomes: Map<string, string>,
+    preActionEnergy: Map<string, number>,
+  ): void {
+    if (!this.cycling) return
 
     this.enemyAI.update(this.enemies, this.amoebas, this.poisons)
     this.applyPassiveEffects()
 
-    // Build per-amoeba feedback including passive effects
     for (const amoeba of readyAmoebas) {
       if (!amoeba.alive && !preActionEnergy.has(amoeba.amoebaId)) continue
       const eBefore = preActionEnergy.get(amoeba.amoebaId) ?? amoeba.energy
@@ -224,6 +243,7 @@ export class CycleManager {
   private async getAmoebaAction(
     amoeba: Amoeba,
     settings: LLMSettings,
+    cycleNumber: number,
   ): Promise<AmoebaAction> {
     let messages: LLMMessage[] = []
     try {
@@ -286,7 +306,7 @@ export class CycleManager {
         if (parseError) {
           // Invalid response format — log and retry immediately with correction
           gameStore.addLogEntry({
-            cycle: gameStore.stats.cycleCount,
+            cycle: cycleNumber,
             amoebaId: amoeba.amoebaId,
             action: 'rejected',
             details: `invalid response: ${parseError}`,
@@ -304,7 +324,7 @@ export class CycleManager {
         if (!rejection) {
           const details = this.formatActionDetails(action)
           gameStore.addLogEntry({
-            cycle: gameStore.stats.cycleCount,
+            cycle: cycleNumber,
             amoebaId: amoeba.amoebaId,
             action: action.action,
             details: attempt > 0 ? `${details ?? ''} (retry ${attempt})`.trim() : details,
@@ -324,7 +344,7 @@ export class CycleManager {
 
         // Game-logic rejection — log and retry with correction
         gameStore.addLogEntry({
-          cycle: gameStore.stats.cycleCount,
+          cycle: cycleNumber,
           amoebaId: amoeba.amoebaId,
           action: 'rejected',
           details: rejection,
@@ -339,7 +359,7 @@ export class CycleManager {
       }
 
       gameStore.addLogEntry({
-        cycle: gameStore.stats.cycleCount,
+        cycle: cycleNumber,
         amoebaId: amoeba.amoebaId,
         action: 'idle',
         details: `gave up after ${CycleManager.MAX_RETRIES} retries — chat history cleared`,
@@ -351,7 +371,7 @@ export class CycleManager {
       const message = err instanceof Error ? err.message : String(err)
       console.warn(`LLM call failed for ${amoeba.amoebaId}:`, err)
       gameStore.addLogEntry({
-        cycle: gameStore.stats.cycleCount,
+        cycle: cycleNumber,
         amoebaId: amoeba.amoebaId,
         action: 'error',
         details: message,
@@ -418,23 +438,37 @@ export class CycleManager {
     }
   }
 
-  private executeAction(amoeba: Amoeba, action: AmoebaAction): string {
+  private executeAction(
+    amoeba: Amoeba,
+    action: AmoebaAction,
+    onComplete?: (outcome: string) => void,
+  ): string {
     switch (action.action) {
       case 'move': {
         const label = DIRECTIONS[action.direction]?.label ?? String(action.direction)
         const cost = (action.distance * MOVE_ENERGY_COST_PER_BODY_LENGTH).toFixed(1)
-        amoeba.applyAction(action)
-        return `Moved ${label} ${action.distance} body-lengths (cost ${cost} energy).`
+        const outcome = `Moved ${label} ${action.distance} body-lengths (cost ${cost} energy).`
+        amoeba.applyAction(action, () => onComplete?.(outcome))
+        return outcome
       }
 
-      case 'feed':
-        return this.handleFeeding(amoeba)
+      case 'feed': {
+        const outcome = this.handleFeeding(amoeba)
+        amoeba.applyAction(action, () => onComplete?.(outcome))
+        return outcome
+      }
 
-      case 'divide':
-        return this.handleDivision(amoeba)
+      case 'divide': {
+        const outcome = this.handleDivision(amoeba)
+        amoeba.applyAction(action, () => onComplete?.(outcome))
+        return outcome
+      }
 
-      case 'idle':
-        return 'Stayed idle — no action taken.'
+      case 'idle': {
+        const outcome = 'Stayed idle — no action taken.'
+        onComplete?.(outcome)
+        return outcome
+      }
     }
   }
 
