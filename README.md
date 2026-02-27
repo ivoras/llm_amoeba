@@ -4,6 +4,8 @@
 
 **[Play the game hosted on GitHub Pages →](https://ivoras.github.io/llm_amoeba/)**
 
+![LLM Amoeba screenshot](screenshot.png)
+
 LLM Amoeba is a browser-based experiment that puts a large language model in control of a virtual amoeba (front-end only, no backend). The amoeba lives on a simulated microscopic surface — 5 cm by 5 cm of terrain filled with food, poison, and predators. The game sends what the amoeba "sees" to an LLM, and the model decides what to do: move, eat, or reproduce. You watch what happens, and tweak the system prompt to make it more efficient, or more exciting.
 
 It's part game, part simulation, part AI stress test. Some models will thrive. Others will walk straight into poison. The fun is in finding out.
