@@ -39,7 +39,7 @@ export class VisionSystem {
           relativePosition: { x: fPos.x - pos.x, y: fPos.y - pos.y },
           distance: dist,
           details: {
-            radiusBodyLengths: cmToBodyLengths(food.effectiveRadiusCm),
+            radius: cmToBodyLengths(food.effectiveRadiusCm),
             foodEnergy: food.remainingEnergy,
             foodEnergyAccessibleAtCurrentPosition: food.getEnergyAtDistance(dist),
           },
@@ -57,7 +57,7 @@ export class VisionSystem {
           relativePosition: { x: pPos.x - pos.x, y: pPos.y - pos.y },
           distance: dist,
           details: {
-            radiusBodyLengths: cmToBodyLengths(poison.effectiveRadiusCm),
+            radius: cmToBodyLengths(poison.effectiveRadiusCm),
           },
         })
       }

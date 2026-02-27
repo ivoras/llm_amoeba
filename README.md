@@ -92,7 +92,8 @@ Open `http://localhost:5173` in your browser.
 3. Choose a **model** (e.g., `gpt-5-mini`).
 4. Optionally tweak the **system prompt** — the default works well, but experimentation is encouraged.
 5. Adjust **temperature** and **cycle interval** to taste.
-6. Hit **Start** and watch your amoeba make its first decisions.
+6. Set a **random seed** (0 = random each reset) for repeatable games — same seed yields the same initial layout and spawn positions.
+7. Hit **Start** and watch your amoeba make its first decisions.
 
 All settings are saved in your browser's local storage.
 
@@ -143,7 +144,7 @@ See [AGENTS.md](AGENTS.md) for full technical documentation of game mechanics an
 ## Ideas to Try
 
 - **Prompt engineering**: Can you write a system prompt that makes the amoeba smarter? Try giving it explicit strategies.
-- **Model comparison**: How does GPT-5-mini compare to Sonnet 4-5, or a local model? Does smarter = better survival?
+- **Model comparison**: How does GPT-5-mini compare to Sonnet 4-5, or a local model? Does smarter = better survival? Use the same **random seed** for fair, repeatable comparisons.
 - **Temperature tuning**: Low temperature for cautious play, high for chaotic exploration — what works?
 - **Speedrun division**: How fast can you get an amoeba to 90 energy and divide?
 
