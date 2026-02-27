@@ -13,7 +13,7 @@ import {
   POISON_MAX_ENERGY,
   WORLD_WIDTH_CM,
   WORLD_HEIGHT_CM,
-  HEX_DIRECTIONS,
+  DIRECTIONS,
   cmToPx,
   INITIAL_FOOD_COUNT,
   INITIAL_POISON_COUNT,
@@ -314,9 +314,10 @@ export class CycleManager {
         cycle: gameStore.stats.cycleCount,
         amoebaId: amoeba.amoebaId,
         action: 'idle',
-        details: `gave up after ${CycleManager.MAX_RETRIES} retries`,
+        details: `gave up after ${CycleManager.MAX_RETRIES} retries — chat history cleared`,
         promptMessages: [...messages],
       })
+      this.amoebaHistory.delete(amoeba.amoebaId)
       return { action: 'idle' }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -368,7 +369,7 @@ export class CycleManager {
   private formatActionDetails(action: AmoebaAction): string | undefined {
     switch (action.action) {
       case 'move': {
-        const label = HEX_DIRECTIONS[action.direction]?.label ?? String(action.direction)
+        const label = DIRECTIONS[action.direction]?.label ?? String(action.direction)
         return `${label}, dist ${action.distance}`
       }
       case 'feed':
@@ -381,7 +382,7 @@ export class CycleManager {
   private executeAction(amoeba: Amoeba, action: AmoebaAction): string {
     switch (action.action) {
       case 'move': {
-        const label = HEX_DIRECTIONS[action.direction]?.label ?? String(action.direction)
+        const label = DIRECTIONS[action.direction]?.label ?? String(action.direction)
         const cost = (action.distance * MOVE_ENERGY_COST_PER_BODY_LENGTH).toFixed(1)
         amoeba.applyAction(action)
         return `Moved ${label} ${action.distance} body-lengths (cost ${cost} energy).`

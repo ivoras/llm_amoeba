@@ -11,13 +11,22 @@ const minimized = ref(false)
 const logContentRef = ref<HTMLElement | null>(null)
 const height = ref(DEFAULT_HEIGHT_PX)
 const modalEntry = ref<LLMLogEntry | null>(null)
+const rawResponseOnly = ref<string | null>(null)
 
 function openRawModal(entry: LLMLogEntry) {
   modalEntry.value = entry
 }
 
+function openRawResponseModal(entry: LLMLogEntry) {
+  rawResponseOnly.value = entry.rawResponse ?? '(no response captured)'
+}
+
 function closeModal() {
   modalEntry.value = null
+}
+
+function closeRawResponseModal() {
+  rawResponseOnly.value = null
 }
 
 function onResizeStart(e: MouseEvent) {
@@ -104,6 +113,12 @@ watch(
           <span class="log-amoeba">{{ entry.amoebaId }}</span>
           <span class="log-action">{{ entry.action }}</span>
           <span v-if="entry.details" class="log-details">{{ entry.details }}</span>
+          <button
+            v-if="entry.rawResponse && entry.action === 'rejected'"
+            class="log-raw-btn log-raw-btn-warn"
+            title="View raw invalid LLM response"
+            @click="openRawResponseModal(entry)"
+          >?</button>
         </div>
       </div>
     </div>
@@ -134,6 +149,18 @@ watch(
             <section v-if="!modalEntry.promptMessages && !modalEntry.rawResponse">
               <p class="raw-empty">No raw data available for this entry.</p>
             </section>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="rawResponseOnly !== null" class="raw-modal-overlay" @click.self="closeRawResponseModal">
+        <div class="raw-modal">
+          <header class="raw-modal-header">
+            <span>Raw Invalid LLM Response</span>
+            <button class="raw-modal-close" @click="closeRawResponseModal">&times;</button>
+          </header>
+          <div class="raw-modal-body">
+            <pre class="raw-msg-content">{{ rawResponseOnly }}</pre>
           </div>
         </div>
       </div>
@@ -283,6 +310,16 @@ watch(
 .log-raw-btn:hover {
   background: rgba(88, 166, 255, 0.2);
   color: var(--text-primary);
+}
+
+.log-raw-btn-warn {
+  color: var(--warning, #d29922);
+  border-color: rgba(210, 153, 34, 0.3);
+}
+
+.log-raw-btn-warn:hover {
+  background: rgba(210, 153, 34, 0.2);
+  color: #f0c040;
 }
 
 .raw-modal-overlay {

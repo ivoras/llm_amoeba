@@ -19,7 +19,7 @@ const ACTION_RESPONSE_FORMAT: LLMChatRequest['response_format'] = {
       type: 'object',
       properties: {
         action: { type: 'string', enum: ['move', 'feed', 'divide'] },
-        direction: { enum: ['right', 'upper-right', 'upper-left', 'left', 'lower-left', 'lower-right', null] },
+        direction: { enum: ['right', 'up-right', 'up', 'up-left', 'left', 'down-left', 'down', 'down-right', null] },
         distance: { type: ['number', 'null'] },
       },
       required: ['action', 'direction', 'distance'],

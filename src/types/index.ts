@@ -7,7 +7,7 @@ export type AmoebaActionType = 'move' | 'feed' | 'divide' | 'idle'
 
 export interface MoveAction {
   action: 'move'
-  direction: number // 0-5
+  direction: number // 0-7
   distance: number  // 1-5 body lengths
 }
 

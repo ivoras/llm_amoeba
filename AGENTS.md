@@ -74,7 +74,7 @@ Energy is a float in [0, 100]. Starting value: 50.
 |---|---|
 | Moving | −0.1 per body-length traveled |
 | Feeding (on food) | +1 per cycle (if food available at position) |
-| Poison (passive) | −1 per cycle while in poison zone |
+| Poison (passive) | −3 per cycle while in poison zone |
 | Enemy contact | −2 per cycle (within 2 amoeba radii of enemy) |
 | Division | Requires ≥ 90; each child gets parent_energy / 2 |
 | Energy = 0 | Entity dies and is removed |
@@ -117,7 +117,7 @@ d > 2×effective_R           → intensity = 0.0
   feedable area contracts over time.
 
 ### Poison Rules
-- Poison drains 1 energy per cycle from any amoeba/enemy whose center is within
+- Poison drains 3 energy per cycle from any amoeba/enemy whose center is within
   the poison circle or halo, regardless of action chosen.
 - **Cumulative**: if the amoeba's center is within multiple poison halos, it
   takes damage from each one independently (e.g., 3 overlapping poisons = 3
@@ -126,9 +126,9 @@ d > 2×effective_R           → intensity = 0.0
 
 ## Movement
 
-- 6 hexagonal directions (60° increments):
-  - 0 = right (0°), 1 = upper-right (60°), 2 = upper-left (120°),
-    3 = left (180°), 4 = lower-left (240°), 5 = lower-right (300°)
+- 8 compass directions (45° increments):
+  - 0 = right (0°), 1 = up-right (45°), 2 = up (90°), 3 = up-left (135°),
+    4 = left (180°), 5 = down-left (225°), 6 = down (270°), 7 = down-right (315°)
 - Distance: **0.5–5 body-lengths per cycle** (minimum 0.5 amoeba diameter when moving)
 - Cost: 0.1 energy × distance_in_body_lengths
 - Clamped to world bounds (0–5 cm on each axis)
@@ -177,13 +177,14 @@ Enemies and other amoebas are detected by center-to-center distance only.
 ```json
 {
   "action": "move" | "feed" | "divide",
-  "direction": <integer 0–5 | null>,
+  "direction": "right" | "up-right" | "up" | "up-left" | "left" | "down-left" | "down" | "down-right" | null,
   "distance": <number 0.5–5 | null>
 }
 ```
 
 All three fields are always present. For `feed` and `divide`, `direction` and
-`distance` are `null`. For `move`, `distance` must be 0.5–5 body lengths.
+`distance` are `null`. For `move`, `direction` is one of 8 compass direction
+strings and `distance` must be 0.5–5 body lengths.
 
 If the response is unparseable or the action is invalid, the amoeba idles
 (no energy cost beyond passive effects like poison).
@@ -217,7 +218,7 @@ All debug overlays are toggled together via **Settings → Show debug overlays**
 - 50 food items at random positions
 - 15 poison items at random positions
 - 10 enemies at random positions (minimum distance from center)
-- Respawn: 1 food every ~5 cycles, 1 poison every ~10 cycles
+- Respawn: immediate — entity counts are kept constant (depleted/dead items are replaced each cycle)
 
 ## File Map
 

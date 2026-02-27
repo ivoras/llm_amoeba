@@ -25,16 +25,18 @@ export const ENEMY_VISION_CM = 0.05
 export const ENEMY_VISION_PX = ENEMY_VISION_CM * PIXELS_PER_CM   // 60
 
 // Movement
-export const MIN_MOVE_BODY_LENGTHS = 1
+export const MIN_MOVE_BODY_LENGTHS = 0.5
 export const MAX_MOVE_BODY_LENGTHS = 5
 export const MOVE_ENERGY_COST_PER_BODY_LENGTH = 0.1
-export const HEX_DIRECTIONS = [
+export const DIRECTIONS = [
   { angle: 0,   label: 'right' },
-  { angle: 60,  label: 'upper-right' },
-  { angle: 120, label: 'upper-left' },
+  { angle: 45,  label: 'up-right' },
+  { angle: 90,  label: 'up' },
+  { angle: 135, label: 'up-left' },
   { angle: 180, label: 'left' },
-  { angle: 240, label: 'lower-left' },
-  { angle: 300, label: 'lower-right' },
+  { angle: 225, label: 'down-left' },
+  { angle: 270, label: 'down' },
+  { angle: 315, label: 'down-right' },
 ] as const
 
 // Energy
@@ -43,7 +45,7 @@ export const MAX_ENERGY = 100
 export const MIN_ENERGY = 0
 export const DIVISION_ENERGY_THRESHOLD = 90
 export const FEEDING_GAIN_PER_CYCLE = 1
-export const POISON_DRAIN_PER_CYCLE = 1
+export const POISON_DRAIN_PER_CYCLE = 3
 export const ENEMY_DRAIN_PER_CYCLE = 2
 export const ENEMY_DRAIN_RADIUS_MULTIPLIER = 2 // within 2 amoeba radii
 
@@ -83,7 +85,7 @@ export const WOBBLE_AMPLITUDE = 0.2 // fraction of radius
 export const WOBBLE_SPEED = 0.003   // radians per ms
 
 // Cycle default
-export const DEFAULT_CYCLE_INTERVAL_MS = 2000
+export const DEFAULT_CYCLE_INTERVAL_MS = 300
 
 // Conversion helpers
 export function cmToPx(cm: number): number {

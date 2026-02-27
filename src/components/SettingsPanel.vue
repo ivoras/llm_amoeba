@@ -88,9 +88,9 @@ function resetDefaults() {
         <input
           id="cycle-interval"
           type="range"
-          min="50"
+          min="10"
           max="2000"
-          step="50"
+          step="10"
           v-model.number="gameStore.gameSettings.cycleIntervalMs"
         />
       </div>

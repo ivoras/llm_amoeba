@@ -2,12 +2,14 @@ import type { AmoebaAction } from '@/types'
 import { MIN_MOVE_BODY_LENGTHS, MAX_MOVE_BODY_LENGTHS } from '@/game/constants'
 
 const DIRECTION_MAP: Record<string, number> = {
-  'right':       0,
-  'upper-right': 1,
-  'upper-left':  2,
-  'left':        3,
-  'lower-left':  4,
-  'lower-right': 5,
+  'right':      0,
+  'up-right':   1,
+  'up':         2,
+  'up-left':    3,
+  'left':       4,
+  'down-left':  5,
+  'down':       6,
+  'down-right': 7,
 }
 
 export class ResponseParser {

@@ -12,10 +12,10 @@ import {
   pxToCm,
   WORLD_WIDTH_CM,
   WORLD_HEIGHT_CM,
-  HEX_DIRECTIONS,
   MOVE_ENERGY_COST_PER_BODY_LENGTH,
   DIVISION_ENERGY_THRESHOLD,
   MOVE_TWEEN_DURATION_MS,
+  DIRECTIONS,
 } from '../constants'
 import type { AmoebaState, Position, AmoebaAction } from '@/types'
 import { gameStore } from '@/stores/gameStore'
@@ -144,7 +144,7 @@ export class Amoeba extends Phaser.GameObjects.Graphics {
   }
 
   private moveInDirection(direction: number, bodyLengths: number, onComplete?: () => void): void {
-    const dir = HEX_DIRECTIONS[direction] ?? HEX_DIRECTIONS[0]
+    const dir = DIRECTIONS[direction] ?? DIRECTIONS[0]
     const angleRad = Phaser.Math.DegToRad(dir.angle)
     const distPx = bodyLengths * AMOEBA_RADIUS_PX * 2
 

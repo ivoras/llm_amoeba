@@ -14,7 +14,7 @@ The game runs in **cycles**. Each cycle:
 
 1. The amoeba's surroundings (everything within 0.3 cm) are gathered and described in plain text.
 2. That description — along with the amoeba's position and energy level — is sent to an LLM via an OpenAI-compatible API.
-3. The LLM responds with a structured JSON action (enforced via JSON schema): move in one of six directions, feed on nearby food, or divide into two amoebas.
+3. The LLM responds with a structured JSON action (enforced via JSON schema): move in one of eight compass directions, feed on nearby food, or divide into two amoebas.
 4. The game executes the action with smooth animation, then applies passive effects (poison damage, predator attacks).
 5. Repeat.
 
@@ -30,7 +30,7 @@ The playing field is a **5 cm × 5 cm** surface rendered at microscopic scale. A
 Circular patches of nutrients scattered across the surface. Each has a **halo** — a gradient field twice the food's radius where energy is still available but weaker. The amoeba must position itself within this zone and choose to feed. Each feeding cycle transfers 1 energy point from the food. Food decays at **0.1 energy per cycle** (in addition to feeding). As food loses energy, its **core and halo physically shrink** in proportion to remaining energy — a half-depleted food item is half the size. When energy drops below 0.1, the food disappears from the map.
 
 ### Poison (purple)
-Silent killers. Poison zones look like food but drain **1 energy per cycle** from any amoeba that wanders into their halo. There's no "feeding" on poison — it just hurts. **Poison damage is cumulative** — overlapping poison halos each drain independently. Like food, poison **shrinks proportionally** as it decays at **0.1 energy per cycle**; when energy drops below 0.1, it disappears.
+Silent killers. Poison zones look like food but drain **3 energy per cycle** from any amoeba that wanders into their halo. There's no "feeding" on poison — it just hurts. **Poison damage is cumulative** — overlapping poison halos each drain independently. Like food, poison **shrinks proportionally** as it decays at **0.1 energy per cycle**; when energy drops below 0.1, it disappears.
 
 ### Movement
 When the LLM chooses to move, the distance must be **at least 0.5 amoeba diameter** (0.5 body lengths) per cycle, up to 5 body lengths. The amoeba cannot stand still when moving — it must travel at least this minimum.
@@ -49,7 +49,7 @@ Energy is the currency of life. It ranges from **0 to 100** and starts at **50**
 | Moving | Costs 0.1 per body-length traveled |
 | Feeding | Gains 1 per cycle (single best food source) |
 | Food decay | −0.1 per cycle (food disappears when &lt; 0.1) |
-| Poison | Drains 1 per cycle per poison (cumulative) |
+| Poison | Drains 3 per cycle per poison (cumulative) |
 | Poison decay | −0.1 per cycle (poison disappears when &lt; 0.1) |
 | Enemy contact | Drains 2 per cycle |
 | Division | Requires 90+; each child gets half |
