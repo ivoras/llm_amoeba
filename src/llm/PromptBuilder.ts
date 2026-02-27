@@ -26,7 +26,7 @@ export class PromptBuilder {
 
     const px = cmToBodyLengths(amoeba.position.x).toFixed(1)
     const py = cmToBodyLengths(amoeba.position.y).toFixed(1)
-    lines.push(`Position: (${px}, ${py}) body-lengths`)
+    lines.push(`Position: (${px}, ${py}) units`)
     lines.push(`Energy: ${amoeba.energy.toFixed(1)}`)
     lines.push('')
 
@@ -38,7 +38,7 @@ export class PromptBuilder {
         const dx = cmToBodyLengths(obj.relativePosition.x).toFixed(1)
         const dy = cmToBodyLengths(obj.relativePosition.y).toFixed(1)
         const dist = cmToBodyLengths(obj.distance).toFixed(1)
-        let detail = `- ${obj.type} at relative (${dx}, ${dy}), distance: ${dist} body-lengths`
+        let detail = `- ${obj.type} at relative (${dx}, ${dy}), distance: ${dist} units`
         if (obj.details) {
           const extras = Object.entries(obj.details)
             .map(([k, v]) => `${k}: ${typeof v === 'number' ? (v as number).toFixed(1) : v}`)

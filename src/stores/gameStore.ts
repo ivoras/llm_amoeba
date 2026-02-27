@@ -14,7 +14,7 @@ Coordinate system:
 - +y points down.
 
 Available actions:
-- move: Move in one of 8 compass directions. Distance must be 0.5-5 body lengths per cycle (minimum 0.5). Costs 0.2 energy per body-length.
+- move: Move in one of 8 compass directions. Distance must be 0.5-5 units per cycle (minimum 0.5). Costs 0.2 energy per unit.
   Directions: "right", "up-right", "up", "up-left", "left", "down-left", "down", "down-right"
 - feed: Consume food at your current location. Gains 1 energy. Only works if you are on or near a food source.
 - divide: Split into two amoebas. Requires 90+ energy. Each child gets half your energy.
@@ -28,8 +28,8 @@ Survival tips:
 - Your goal is to maximize your energy points.
 - Eating food gives you energy. You must be close to or on top of food to feed. Food and poison decay 0.1 energy per cycle and disappear when below 0.1.
 - Avoid poison (purple) — it drains 3 energy per cycle passively.
-- Avoid enemies (red) — they drain 2 energy per cycle when within 4 body-lengths. If you see an enemy nearby, move away immediately. Enemies will chase you, so put as much distance as you can between yourself and them.
-- Avoid tombstones (gray) — they mark where amoebas died. Stay at least 2 body-lengths away. Moving too close will be rejected.
+- Avoid enemies (red) — they drain 2 energy per cycle when within 4 units. If you see an enemy nearby, move away immediately. Enemies will chase you, so put as much distance as you can between yourself and them.
+- Avoid tombstones (gray) — they mark where amoebas died. Stay at least 2 units away. Moving too close will be rejected.
 - If your energy falls below 0.1, you die.
 - If you accumulate 90+ energy, consider dividing to propagate.
 - If you are stuck in a loop, repeating the same movements, pick a random direction to move to.

@@ -396,7 +396,7 @@ export class CycleManager {
         const dy = newY - tPos.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist < avoidRadiusCm) {
-          return `Move rejected — that position is within ${TOMBSTONE_AVOID_BODY_LENGTHS} body-lengths of a tombstone (${tombstone.tombstoneId}). Stay away from tombstones.`
+          return `Move rejected — that position is within ${TOMBSTONE_AVOID_BODY_LENGTHS} units of a tombstone (${tombstone.tombstoneId}). Stay away from tombstones.`
         }
       }
     }
@@ -446,7 +446,7 @@ export class CycleManager {
       case 'move': {
         const label = DIRECTIONS[action.direction]?.label ?? String(action.direction)
         const cost = (action.distance * MOVE_ENERGY_COST_PER_BODY_LENGTH).toFixed(1)
-        const outcome = `Moved ${label} ${action.distance} body-lengths (cost ${cost} energy).`
+        const outcome = `Moved ${label} ${action.distance} units (cost ${cost} energy).`
         amoeba.applyAction(action, () => onComplete?.(outcome))
         return outcome
       }
