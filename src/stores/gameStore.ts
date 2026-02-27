@@ -22,10 +22,10 @@ Response format (respond with ONLY a JSON object, no other text):
 Survival tips:
 - Seek food (green) to gain energy. You must be close to or on top of food to feed. Food and poison decay 0.1 energy per cycle and disappear when below 0.1.
 - Avoid poison (purple) — it drains 3 energy per cycle passively.
-- Avoid enemies (red) — they drain 2 energy per cycle if they are close.
+- Avoid enemies (red) — they drain 2 energy per cycle when within 4 body-lengths. If you see an enemy nearby, move away immediately. Enemies will chase you, so put as much distance as you can between yourself and them.
 - If your energy reaches 0, you die.
 - If you accumulate 90+ energy, consider dividing to propagate.
-- Be strategic: weigh the energy cost of movement against potential gains.`
+- Be strategic: weigh the energy cost of movement against potential gains. Survival is the priority — always flee from enemies before seeking food.`
 
 function loadSettings(): { llm: LLMSettings; game: GameSettings } {
   try {

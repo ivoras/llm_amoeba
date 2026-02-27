@@ -47,7 +47,7 @@ export const DIVISION_ENERGY_THRESHOLD = 90
 export const FEEDING_GAIN_PER_CYCLE = 2
 export const POISON_DRAIN_PER_CYCLE = 3
 export const ENEMY_DRAIN_PER_CYCLE = 2
-export const ENEMY_DRAIN_RADIUS_MULTIPLIER = 2 // within 2 amoeba radii
+export const ENEMY_DRAIN_RADIUS_MULTIPLIER = 8 // within 8 amoeba radii = 4 body-lengths
 
 // Food
 export const MAX_FOOD_RADIUS_CM = 0.1

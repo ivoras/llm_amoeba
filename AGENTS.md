@@ -73,9 +73,9 @@ Energy is a float in [0, 100]. Starting value: 50.
 | Event | Energy change |
 |---|---|
 | Moving | −0.1 per body-length traveled |
-| Feeding (on food) | +1 per cycle (if food available at position) |
+| Feeding (on food) | +2 per cycle (if food available at position) |
 | Poison (passive) | −3 per cycle while in poison zone |
-| Enemy contact | −2 per cycle (within 2 amoeba radii of enemy) |
+| Enemy contact | −2 per cycle (within 4 body-lengths of enemy) |
 | Division | Requires ≥ 90; each child gets parent_energy / 2 |
 | Energy = 0 | Entity dies and is removed |
 
@@ -136,10 +136,11 @@ d > 2×effective_R           → intensity = 0.0
 ## Enemies
 
 - Same physical size as amoeba, rendered in red.
-- Vision radius: 0.05 cm.
+- Vision radius: 0.15 cm (6 body-lengths).
 - AI: greedy — each cycle, move toward the nearest visible amoeba (up to 5
   body-lengths). If no amoeba is visible, wander randomly.
-- Drain: 2 energy/cycle from any amoeba within 2 amoeba-radii.
+- Drain: 2 energy/cycle from any amoeba within 4 body-lengths.
+- Visual feedback: pulsates between violet and red while actively draining.
 - Affected by poison identically to amoebas.
 - Die at 0 energy; start with 50 energy.
 
@@ -160,13 +161,16 @@ Tells the LLM it controls an amoeba and must respond with a single JSON object.
 
 ### User Message (per cycle, per amoeba)
 Contains:
-- Amoeba position `(x, y)` in cm
+- Result of previous action (outcome description, energy delta) — if not the first cycle
+- Amoeba position `(x, y)` in body-lengths
 - Current energy
 - List of nearby objects within the 0.3 cm vision radius:
   - type (food / poison / enemy / amoeba)
-  - relative position (dx, dy) in cm
-  - distance in cm
+  - relative position (dx, dy) in body-lengths
+  - distance in body-lengths
   - additional info (energy remaining for food, etc.)
+
+All distances and positions are expressed in **body-lengths** (1 body-length = 0.025 cm = amoeba diameter).
 
 ### Vision Detection
 The amoeba detects a food or poison item when any part of the item's halo
@@ -189,10 +193,16 @@ strings and `distance` must be 0.5–5 body lengths.
 If the response is unparseable or the action is invalid, the amoeba idles
 (no energy cost beyond passive effects like poison).
 
+### LLM Conversation History
+Each amoeba maintains its own conversation history (last 5 roundtrips / 10
+messages). If an invalid response exhausts retries, the amoeba's history is
+cleared. History is also cleared on game reset.
+
 ### LLM Log
 The bottom panel shows a per-cycle log of every LLM decision. Each entry has
 a **{}** button that opens a modal showing the raw prompt messages and the raw
-LLM response for that cycle.
+LLM response for that cycle. Rejected entries also show a **?** button that
+displays only the raw invalid LLM response.
 
 ## Visual Indicators
 

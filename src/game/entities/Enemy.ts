@@ -73,19 +73,20 @@ export class Enemy extends Phaser.GameObjects.Graphics {
   private drawShape(): void {
     this.clear()
 
-    const pulse = this.feeding
+    // Pulsate between violet (0x9922cc) and red (0xcc2222) when feeding
+    const t = this.feeding
       ? 0.5 + 0.5 * Math.sin(this.wobbleTime * 8)
       : 0
     const color = this.feeding
       ? Phaser.Display.Color.GetColor(
-          Math.round(204 + 51 * pulse),
-          Math.round(34 + 120 * pulse),
-          Math.round(34 + 20 * pulse),
+          Math.round(153 + (204 - 153) * t),  // R: 153 → 204
+          Math.round(34 * t),                  // G: 0 → 34
+          Math.round(204 - (204 - 34) * t),   // B: 204 → 34
         )
       : 0xcc2222
-    const alpha = this.feeding ? 0.6 + 0.35 * pulse : 0.75
+    const alpha = this.feeding ? 0.65 + 0.3 * t : 0.75
     this.fillStyle(color, alpha)
-    this.lineStyle(1.5, this.feeding ? 0xff4444 : 0x881111, 0.9)
+    this.lineStyle(1.5, this.feeding ? 0xcc44ff : 0x881111, 0.9)
 
     this.beginPath()
     for (let i = 0; i <= WOBBLE_SEGMENTS; i++) {

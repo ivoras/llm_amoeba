@@ -2,6 +2,7 @@ import {
   POISON_DRAIN_PER_CYCLE,
   POISON_FOOD_DRAIN_PER_CYCLE,
   FEEDING_GAIN_PER_CYCLE,
+  ENEMY_DRAIN_PER_CYCLE,
 
   FOOD_MIN_ENERGY,
   FOOD_MAX_ENERGY,
@@ -166,7 +167,7 @@ export class CycleManager {
         const dy = pos.y - enemy.positionCm.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist <= AMOEBA_RADIUS_CM * ENEMY_DRAIN_RADIUS_MULTIPLIER) {
-          passiveLines.push(`Enemy (${enemy.enemyId}) is nearby and draining your energy.`)
+          passiveLines.push(`Enemy (${enemy.enemyId}) is feeding on you and draining ${ENEMY_DRAIN_PER_CYCLE} energy per cycle! Move away to escape.`)
         }
       }
       if (!amoeba.alive) {

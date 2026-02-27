@@ -18,7 +18,7 @@ The game runs in **cycles**. Each cycle:
 4. The game executes the action with smooth animation, then applies passive effects (poison damage, predator attacks).
 5. Repeat.
 
-You configure which LLM to use, tweak the system prompt, and see if your amoeba survives — or thrives.
+Each amoeba keeps its own conversation history (last 5 roundtrips), and each prompt includes feedback about the previous action's outcome and net energy change. You configure which LLM to use, tweak the system prompt, and see if your amoeba survives — or thrives.
 
 ---
 
@@ -27,7 +27,7 @@ You configure which LLM to use, tweak the system prompt, and see if your amoeba 
 The playing field is a **5 cm × 5 cm** surface rendered at microscopic scale. A realistically-sized amoeba (~0.025 cm diameter) navigates this world with a camera that follows it and lets you zoom and pan.
 
 ### Food (green)
-Circular patches of nutrients scattered across the surface. Each has a **halo** — a gradient field twice the food's radius where energy is still available but weaker. The amoeba must position itself within this zone and choose to feed. Each feeding cycle transfers 1 energy point from the food. Food decays at **0.1 energy per cycle** (in addition to feeding). As food loses energy, its **core and halo physically shrink** in proportion to remaining energy — a half-depleted food item is half the size. When energy drops below 0.1, the food disappears from the map.
+Circular patches of nutrients scattered across the surface. Each has a **halo** — a gradient field twice the food's radius where energy is still available but weaker. The amoeba must position itself within this zone and choose to feed. Each feeding cycle transfers 2 energy points from the food. Food decays at **0.1 energy per cycle** (in addition to feeding). As food loses energy, its **core and halo physically shrink** in proportion to remaining energy — a half-depleted food item is half the size. When energy drops below 0.1, the food disappears from the map.
 
 ### Poison (purple)
 Silent killers. Poison zones look like food but drain **3 energy per cycle** from any amoeba that wanders into their halo. There's no "feeding" on poison — it just hurts. **Poison damage is cumulative** — overlapping poison halos each drain independently. Like food, poison **shrinks proportionally** as it decays at **0.1 energy per cycle**; when energy drops below 0.1, it disappears.
@@ -36,7 +36,7 @@ Silent killers. Poison zones look like food but drain **3 energy per cycle** fro
 When the LLM chooses to move, the distance must be **at least 0.5 amoeba diameter** (0.5 body lengths) per cycle, up to 5 body lengths. The amoeba cannot stand still when moving — it must travel at least this minimum.
 
 ### Enemies (red)
-Bot-controlled predators the same size as your amoeba. They have shorter vision (0.05 cm) but move aggressively toward any amoeba they spot. If an enemy gets within 2 amoeba-radii, it drains **2 energy per cycle**. Enemies are also vulnerable to poison, so sometimes the terrain fights your battles for you.
+Bot-controlled predators the same size as your amoeba. They have a vision radius of 0.15 cm (6 body-lengths) and move aggressively toward any amoeba they spot. If an enemy gets within **4 body-lengths**, it drains **2 energy per cycle** and its sprite pulsates between violet and red to signal active draining. Enemies are also vulnerable to poison, so sometimes the terrain fights your battles for you.
 
 ---
 
@@ -47,11 +47,11 @@ Energy is the currency of life. It ranges from **0 to 100** and starts at **50**
 | Event | Effect |
 |---|---|
 | Moving | Costs 0.1 per body-length traveled |
-| Feeding | Gains 1 per cycle (single best food source) |
+| Feeding | Gains 2 per cycle (single best food source) |
 | Food decay | −0.1 per cycle (food disappears when &lt; 0.1) |
 | Poison | Drains 3 per cycle per poison (cumulative) |
 | Poison decay | −0.1 per cycle (poison disappears when &lt; 0.1) |
-| Enemy contact | Drains 2 per cycle |
+| Enemy contact | Drains 2 per cycle (within 4 body-lengths) |
 | Division | Requires 90+; each child gets half |
 | Reaching 0 | Death |
 
@@ -95,7 +95,7 @@ All settings are saved in your browser's local storage.
 - **Right-click drag** — pan the camera
 - **Click an amoeba** — select it (camera follows)
 - **Settings panel** — start, pause, reset, configure LLM
-- **LLM Log** — bottom panel shows every decision; click the **{}** button on any entry to see the full raw prompt and response
+- **LLM Log** — bottom panel shows every decision; click **{}** to see the full prompt/response, or **?** (on rejected entries) to see the raw invalid response
 
 ---
 
