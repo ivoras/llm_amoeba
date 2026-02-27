@@ -60,6 +60,7 @@ export class CycleManager {
   // Each roundtrip = 1 user + 1 assistant = 2 messages; 5 roundtrips = 10 messages.
   private amoebaHistory = new Map<string, LLMMessage[]>()
   private static readonly MAX_HISTORY_MESSAGES = 10
+  private static readonly HISTORY_CLEAR_INTERVAL_CYCLES = 10
 
   // Tracks the last resolved action, outcome, and energy snapshot per amoeba for next-cycle feedback.
   private amoebaLastAction = new Map<string, { description: string; outcome: string; energyBefore: number }>()
@@ -129,6 +130,7 @@ export class CycleManager {
     const cycleStartTime = Date.now()
     gameStore.stats.cycleCount++
     const cycleNumber = gameStore.stats.cycleCount
+    this.clearAmoebaChatHistoryIfDue(cycleNumber)
 
     const settings: LLMSettings = { ...gameStore.llmSettings }
 
@@ -635,6 +637,11 @@ export class CycleManager {
     for (const id of this.amoebaLastAction.keys()) {
       if (!activeIds.has(id)) this.amoebaLastAction.delete(id)
     }
+  }
+
+  private clearAmoebaChatHistoryIfDue(cycleNumber: number): void {
+    if (cycleNumber % CycleManager.HISTORY_CLEAR_INTERVAL_CYCLES !== 0) return
+    this.amoebaHistory.clear()
   }
 
   private updateStats(): void {

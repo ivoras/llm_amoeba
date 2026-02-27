@@ -209,7 +209,7 @@ If the response is unparseable or the action is invalid, the amoeba idles
 ### LLM Conversation History
 Each amoeba maintains its own conversation history (last 5 roundtrips / 10
 messages). If an invalid response exhausts retries, the amoeba's history is
-cleared. History is also cleared on game reset.
+cleared. History is also cleared every 10 cycles and on game reset.
 
 ### LLM Log
 The bottom panel shows a per-cycle log of every LLM decision. Each entry has
