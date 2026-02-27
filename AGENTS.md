@@ -41,7 +41,7 @@ Vue App (App.vue)
 └── GameView.vue             Mounts Phaser canvas
      └── Phaser.Game
           └── GameScene
-               ├── Entities  (Amoeba, Enemy, FoodItem, PoisonItem)
+               ├── Entities  (Amoeba, Enemy, FoodItem, PoisonItem, Tombstone)
                └── Systems   (CycleManager, VisionSystem, EnemyAI)
                     └── LLM Layer (LLMClient, PromptBuilder, ResponseParser)
 ```
@@ -77,7 +77,7 @@ Energy is a float in [0, 100]. Starting value: 50.
 | Poison (passive) | −3 per cycle while in poison zone |
 | Enemy contact | −2 per cycle (within 4 body-lengths of enemy) |
 | Division | Requires ≥ 90; each child gets parent_energy / 2 |
-| Energy = 0 | Entity dies and is removed |
+| Energy = 0 | Entity dies; a tombstone spawns at death location |
 
 ## Food & Poison — Halo Model
 
@@ -132,6 +132,7 @@ d > 2×effective_R           → intensity = 0.0
 - Distance: **0.5–5 body-lengths per cycle** (minimum 0.5 amoeba diameter when moving)
 - Cost: 0.2 energy × distance_in_body_lengths
 - Clamped to world bounds (0–5 cm on each axis)
+- Move rejected if target position is within 2 body-lengths of a tombstone
 
 ## Enemies
 
@@ -143,6 +144,15 @@ d > 2×effective_R           → intensity = 0.0
 - Visual feedback: pulsates between violet and red while actively draining.
 - Affected by poison identically to amoebas.
 - Die at 0 energy; start with 50 energy.
+
+## Tombstones
+
+- Gray markers spawned at the coordinates where an amoeba dies.
+- Remain in the world until the game is reset.
+- Living amoebas must stay **at least 2 body-lengths** away. Move actions that
+  would place an amoeba within 2 body-lengths of a tombstone are rejected.
+- Detected by vision like enemies/amoebas (center-to-center distance).
+- Shown in the LLM prompt as `type: tombstone`.
 
 ## LLM Integration
 
@@ -165,7 +175,7 @@ Contains:
 - Amoeba position `(x, y)` in body-lengths
 - Current energy
 - List of nearby objects within the 0.3 cm vision radius:
-  - type (food / poison / enemy / amoeba)
+  - type (food / poison / enemy / amoeba / tombstone)
   - relative position (dx, dy) in body-lengths
   - distance in body-lengths
   - additional info (energy remaining for food, etc.)
@@ -175,7 +185,7 @@ All distances and positions are expressed in **body-lengths** (1 body-length = 0
 ### Vision Detection
 The amoeba detects a food or poison item when any part of the item's halo
 intersects the vision circle: `center_distance ≤ vision_radius + item_radius × halo_multiplier`.
-Enemies and other amoebas are detected by center-to-center distance only.
+Enemies, other amoebas, and tombstones are detected by center-to-center distance only.
 
 ### Response JSON Schema
 ```json
@@ -253,6 +263,7 @@ src/
       Enemy.ts                Bot predator
       FoodItem.ts             Food with halo
       PoisonItem.ts           Poison with halo
+      Tombstone.ts            Death marker (avoid zone 2 body-lengths)
     systems/
       CycleManager.ts         Game cycle orchestration
       VisionSystem.ts         Surroundings query

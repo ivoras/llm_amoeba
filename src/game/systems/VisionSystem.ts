@@ -4,6 +4,7 @@ import type { Amoeba } from '../entities/Amoeba'
 import type { Enemy } from '../entities/Enemy'
 import type { FoodItem } from '../entities/FoodItem'
 import type { PoisonItem } from '../entities/PoisonItem'
+import type { Tombstone } from '../entities/Tombstone'
 
 function distanceCm(a: Position, b: Position): number {
   const dx = a.x - b.x
@@ -18,6 +19,7 @@ export class VisionSystem {
     enemies: Enemy[],
     foods: FoodItem[],
     poisons: PoisonItem[],
+    tombstones: Tombstone[],
     visionRadius: number = AMOEBA_VISION_CM,
   ): NearbyObject[] {
     const pos = viewer.positionCm
@@ -82,6 +84,18 @@ export class VisionSystem {
           details: {
             energy: other.energy,
           },
+        })
+      }
+    }
+
+    for (const tombstone of tombstones) {
+      const tPos = tombstone.positionCm
+      const dist = distanceCm(pos, tPos)
+      if (dist <= visionRadius) {
+        result.push({
+          type: 'tombstone',
+          relativePosition: { x: tPos.x - pos.x, y: tPos.y - pos.y },
+          distance: dist,
         })
       }
     }

@@ -23,6 +23,7 @@ import { Amoeba } from '../entities/Amoeba'
 import { Enemy } from '../entities/Enemy'
 import { FoodItem } from '../entities/FoodItem'
 import { PoisonItem } from '../entities/PoisonItem'
+import { Tombstone } from '../entities/Tombstone'
 import { CycleManager } from '../systems/CycleManager'
 import { CameraController } from '../CameraController'
 import { registerScene } from '../PhaserGame'
@@ -34,6 +35,7 @@ export class GameScene extends Phaser.Scene {
   public enemies: Enemy[] = []
   public foods: FoodItem[] = []
   public poisons: PoisonItem[] = []
+  public tombstones: Tombstone[] = []
 
   public cycleManager!: CycleManager
   public cameraController!: CameraController
@@ -52,6 +54,7 @@ export class GameScene extends Phaser.Scene {
       this.enemies,
       this.foods,
       this.poisons,
+      this.tombstones,
     )
 
     this.cameraController = new CameraController(this)
@@ -103,6 +106,9 @@ export class GameScene extends Phaser.Scene {
     if (obj instanceof PoisonItem && !obj.depleted) {
       return `${obj.poisonId}\nEnergy: ${obj.remainingEnergy.toFixed(1)}`
     }
+    if (obj instanceof Tombstone) {
+      return `${obj.tombstoneId}\n(avoid — stay 2+ body-lengths away)`
+    }
     return null
   }
 
@@ -141,11 +147,13 @@ export class GameScene extends Phaser.Scene {
     for (const e of this.enemies) e.destroy()
     for (const f of this.foods) f.destroy()
     for (const p of this.poisons) p.destroy()
+    for (const t of this.tombstones) t.destroy()
 
     this.amoebas.length = 0
     this.enemies.length = 0
     this.foods.length = 0
     this.poisons.length = 0
+    this.tombstones.length = 0
 
     this.spawnInitialEntities()
 

@@ -40,6 +40,9 @@ When the LLM chooses to move, the distance must be **at least 0.5 amoeba diamete
 ### Enemies (red)
 Bot-controlled predators the same size as your amoeba. They have a vision radius of 0.25 cm (10 body-lengths) and move aggressively toward any amoeba they spot. If an enemy gets within **4 body-lengths**, it drains **2 energy per cycle** and its sprite pulsates between violet and red to signal active draining. Enemies are also vulnerable to poison, so sometimes the terrain fights your battles for you.
 
+### Tombstones (gray)
+When an amoeba dies, a **tombstone** appears at its death location. Tombstones persist until you reset the game. Living amoebas must stay **at least 2 body-lengths** away — move actions that would bring you too close are rejected.
+
 ---
 
 ## Energy
@@ -55,7 +58,7 @@ Energy is the currency of life. It ranges from **0 to 100** and starts at **50**
 | Poison decay | −0.1 per cycle (poison disappears when &lt; 0.1) |
 | Enemy contact | Drains 2 per cycle (within 4 body-lengths) |
 | Division | Requires 90+; each child gets half |
-| Reaching 0 | Death |
+| Reaching 0 | Death (creates a tombstone at that location) |
 
 The most successful amoebas will accumulate enough energy to **divide** — splitting into two independently-controlled organisms, each making their own LLM calls. This is the ultimate measure of success.
 
@@ -122,7 +125,7 @@ src/
     constants.ts          # All game parameters
     CameraController.ts   # Zoom, pan, follow
     scenes/GameScene.ts   # Main game scene
-    entities/             # Amoeba, Enemy, Food, Poison
+    entities/             # Amoeba, Enemy, Food, Poison, Tombstone
     systems/              # CycleManager, VisionSystem, EnemyAI
   llm/                    # LLM client (structured outputs, reasoning model support), prompt builder, response parser
   stores/                 # Shared reactive state

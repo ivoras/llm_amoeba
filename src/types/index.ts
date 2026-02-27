@@ -54,7 +54,7 @@ export interface PoisonState {
 }
 
 export interface NearbyObject {
-  type: 'food' | 'poison' | 'enemy' | 'amoeba'
+  type: 'food' | 'poison' | 'enemy' | 'amoeba' | 'tombstone'
   relativePosition: Position
   distance: number      // cm
   details?: Record<string, number | string>

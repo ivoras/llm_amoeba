@@ -16,6 +16,7 @@ import {
   WORLD_HEIGHT_CM,
   DIRECTIONS,
   cmToPx,
+  pxToCm,
   INITIAL_FOOD_COUNT,
   INITIAL_POISON_COUNT,
   INITIAL_ENEMY_COUNT,
@@ -23,7 +24,9 @@ import {
   DIVISION_ENERGY_THRESHOLD,
   MOVE_ENERGY_COST_PER_BODY_LENGTH,
   AMOEBA_RADIUS_CM,
+  AMOEBA_DIAMETER_CM,
   ENEMY_DRAIN_RADIUS_MULTIPLIER,
+  TOMBSTONE_AVOID_BODY_LENGTHS,
 } from '../constants'
 import { LLMClient } from '@/llm/LLMClient'
 import { PromptBuilder } from '@/llm/PromptBuilder'
@@ -34,6 +37,7 @@ import type { Amoeba } from '../entities/Amoeba'
 import { Enemy } from '../entities/Enemy'
 import { FoodItem } from '../entities/FoodItem'
 import { PoisonItem } from '../entities/PoisonItem'
+import { Tombstone } from '../entities/Tombstone'
 import type { LLMSettings, LLMMessage, AmoebaAction } from '@/types'
 import { gameStore } from '@/stores/gameStore'
 import { rng } from '../rng'
@@ -50,6 +54,7 @@ export class CycleManager {
   private enemies: Enemy[]
   private foods: FoodItem[]
   private poisons: PoisonItem[]
+  private tombstones: Tombstone[]
 
   private cycling = false
   private cycleTimer: number | null = null
@@ -68,12 +73,14 @@ export class CycleManager {
     enemies: Enemy[],
     foods: FoodItem[],
     poisons: PoisonItem[],
+    tombstones: Tombstone[],
   ) {
     this.scene = scene
     this.amoebas = amoebas
     this.enemies = enemies
     this.foods = foods
     this.poisons = poisons
+    this.tombstones = tombstones
   }
 
   start(): void {
@@ -219,6 +226,7 @@ export class CycleManager {
         this.enemies,
         this.foods,
         this.poisons,
+        this.tombstones,
       )
 
       // Snapshot energy before this cycle's actions are applied
@@ -347,6 +355,26 @@ export class CycleManager {
   }
 
   private validateAction(amoeba: Amoeba, action: AmoebaAction): string | null {
+    if (action.action === 'move') {
+      const dir = DIRECTIONS[action.direction] ?? DIRECTIONS[0]
+      const angleRad = (dir.angle * Math.PI) / 180
+      const distCm = action.distance * AMOEBA_DIAMETER_CM
+      let newX = amoeba.positionCm.x + Math.cos(angleRad) * distCm
+      let newY = amoeba.positionCm.y - Math.sin(angleRad) * distCm
+      newX = Math.max(0, Math.min(WORLD_WIDTH_CM, newX))
+      newY = Math.max(0, Math.min(WORLD_HEIGHT_CM, newY))
+      const avoidRadiusCm = TOMBSTONE_AVOID_BODY_LENGTHS * AMOEBA_DIAMETER_CM
+      for (const tombstone of this.tombstones) {
+        const tPos = tombstone.positionCm
+        const dx = newX - tPos.x
+        const dy = newY - tPos.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist < avoidRadiusCm) {
+          return `Move rejected — that position is within ${TOMBSTONE_AVOID_BODY_LENGTHS} body-lengths of a tombstone (${tombstone.tombstoneId}). Stay away from tombstones.`
+        }
+      }
+    }
+
     if (action.action === 'feed') {
       const pos = amoeba.positionCm
       const canFeed = this.foods.some((food) => {
@@ -487,8 +515,13 @@ export class CycleManager {
 
   private removeDeadEntities(): void {
     for (let i = this.amoebas.length - 1; i >= 0; i--) {
-      if (!this.amoebas[i].alive) {
+      const amoeba = this.amoebas[i]
+      if (!amoeba.alive) {
+        const pos = amoeba.positionCm
+        const tombstone = new Tombstone(this.scene, cmToPx(pos.x), cmToPx(pos.y))
+        this.tombstones.push(tombstone)
         this.amoebas.splice(i, 1)
+        // Amoeba destroys itself when death tween completes
       }
     }
     for (let i = this.enemies.length - 1; i >= 0; i--) {

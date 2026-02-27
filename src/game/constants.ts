@@ -29,6 +29,7 @@ export const MIN_MOVE_BODY_LENGTHS = 0.5
 export const MAX_MOVE_BODY_LENGTHS = 5
 export const ENEMY_MAX_MOVE_BODY_LENGTHS = 3
 export const MOVE_ENERGY_COST_PER_BODY_LENGTH = 0.2
+export const TOMBSTONE_AVOID_BODY_LENGTHS = 2
 export const DIRECTIONS = [
   { angle: 0,   label: 'right' },
   { angle: 45,  label: 'up-right' },
