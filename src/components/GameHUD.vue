@@ -76,6 +76,15 @@ function shortId(id: string): string {
         {{ gameStore.stats.promptTokens.toLocaleString() }} in / {{ gameStore.stats.generatedTokens.toLocaleString() }} out
       </span>
     </div>
+
+    <div class="github-box">
+      <a
+        href="https://github.com/ivoras/llm_amoeba"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="github-link"
+      ><i class="fa-brands fa-github"></i> GitHub</a>
+    </div>
   </div>
 </template>
 
@@ -205,5 +214,30 @@ function shortId(id: string): string {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-secondary);
+}
+
+.github-box {
+  padding-top: 6px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 2px;
+}
+
+.github-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  pointer-events: auto;
+  transition: color 0.15s;
+}
+
+.github-link:hover {
+  color: var(--accent);
+}
+
+.github-link i {
+  font-size: 1.1em;
 }
 </style>
