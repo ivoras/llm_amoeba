@@ -88,6 +88,12 @@ function resetGame() {
       <div class="game-area">
         <GameView />
         <GameHUD />
+        <a
+          href="https://github.com/ivoras/llm_amoeba"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="github-link"
+        ><i class="fa-brands fa-github"></i> GitHub</a>
         <LLMLogPanel />
       </div>
     </div>
@@ -230,5 +236,34 @@ function resetGame() {
 
 .intro-dismiss:hover {
   background: var(--accent-hover);
+}
+
+.github-link {
+  position: absolute;
+  bottom: 116px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(13, 17, 23, 0.88);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-decoration: none;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.github-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(13, 17, 23, 0.95);
+}
+
+.github-link i {
+  font-size: 1.1em;
 }
 </style>
