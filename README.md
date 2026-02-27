@@ -36,7 +36,7 @@ Silent killers. Poison zones look like food but drain **3 energy per cycle** fro
 When the LLM chooses to move, the distance must be **at least 0.5 amoeba diameter** (0.5 body lengths) per cycle, up to 5 body lengths. The amoeba cannot stand still when moving — it must travel at least this minimum.
 
 ### Enemies (red)
-Bot-controlled predators the same size as your amoeba. They have a vision radius of 0.15 cm (6 body-lengths) and move aggressively toward any amoeba they spot. If an enemy gets within **4 body-lengths**, it drains **2 energy per cycle** and its sprite pulsates between violet and red to signal active draining. Enemies are also vulnerable to poison, so sometimes the terrain fights your battles for you.
+Bot-controlled predators the same size as your amoeba. They have a vision radius of 0.25 cm (10 body-lengths) and move aggressively toward any amoeba they spot. If an enemy gets within **4 body-lengths**, it drains **2 energy per cycle** and its sprite pulsates between violet and red to signal active draining. Enemies are also vulnerable to poison, so sometimes the terrain fights your battles for you.
 
 ---
 

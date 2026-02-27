@@ -62,7 +62,7 @@ Communication between Vue and Phaser flows through a shared reactive store
 - Amoeba diameter: 0.025 cm → 30 px
 - Amoeba radius: 0.0125 cm → 15 px
 - Amoeba vision radius: 0.3 cm → 360 px
-- Enemy vision radius: 0.05 cm → 60 px
+- Enemy vision radius: 0.25 cm (10 body-lengths) → 300 px
 - Max food radius: 0.1 cm → 120 px
 - Max movement per cycle: 5 body-lengths = 0.125 cm → 150 px
 
@@ -136,7 +136,7 @@ d > 2×effective_R           → intensity = 0.0
 ## Enemies
 
 - Same physical size as amoeba, rendered in red.
-- Vision radius: 0.15 cm (6 body-lengths).
+- Vision radius: 0.25 cm (10 body-lengths).
 - AI: greedy — each cycle, move toward the nearest visible amoeba (up to 5
   body-lengths). If no amoeba is visible, wander randomly.
 - Drain: 2 energy/cycle from any amoeba within 4 body-lengths.

@@ -21,8 +21,8 @@ export const VIEWPORT_HEIGHT = 1000
 export const AMOEBA_VISION_CM = 0.3
 export const AMOEBA_VISION_PX = AMOEBA_VISION_CM * PIXELS_PER_CM // 120
 
-export const ENEMY_VISION_CM = 0.15
-export const ENEMY_VISION_PX = ENEMY_VISION_CM * PIXELS_PER_CM   // 60
+export const ENEMY_VISION_CM = 0.25  // 10 body-lengths
+export const ENEMY_VISION_PX = ENEMY_VISION_CM * PIXELS_PER_CM   // 300
 
 // Movement
 export const MIN_MOVE_BODY_LENGTHS = 0.5
