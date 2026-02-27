@@ -48,7 +48,7 @@ Energy is the currency of life. It ranges from **0 to 100** and starts at **50**
 
 | Event | Effect |
 |---|---|
-| Moving | Costs 0.1 per body-length traveled |
+| Moving | Costs 0.2 per body-length traveled |
 | Feeding | Gains 2 per cycle (single best food source) |
 | Food decay | −0.1 per cycle (food disappears when &lt; 0.1) |
 | Poison | Drains 3 per cycle per poison (cumulative) |

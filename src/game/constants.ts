@@ -28,7 +28,7 @@ export const ENEMY_VISION_PX = ENEMY_VISION_CM * PIXELS_PER_CM   // 300
 export const MIN_MOVE_BODY_LENGTHS = 0.5
 export const MAX_MOVE_BODY_LENGTHS = 5
 export const ENEMY_MAX_MOVE_BODY_LENGTHS = 3
-export const MOVE_ENERGY_COST_PER_BODY_LENGTH = 0.1
+export const MOVE_ENERGY_COST_PER_BODY_LENGTH = 0.2
 export const DIRECTIONS = [
   { angle: 0,   label: 'right' },
   { angle: 45,  label: 'up-right' },

@@ -72,7 +72,7 @@ Energy is a float in [0, 100]. Starting value: 50.
 
 | Event | Energy change |
 |---|---|
-| Moving | −0.1 per body-length traveled |
+| Moving | −0.2 per body-length traveled |
 | Feeding (on food) | +2 per cycle (if food available at position) |
 | Poison (passive) | −3 per cycle while in poison zone |
 | Enemy contact | −2 per cycle (within 4 body-lengths of enemy) |
@@ -130,7 +130,7 @@ d > 2×effective_R           → intensity = 0.0
   - 0 = right (0°), 1 = up-right (45°), 2 = up (90°), 3 = up-left (135°),
     4 = left (180°), 5 = down-left (225°), 6 = down (270°), 7 = down-right (315°)
 - Distance: **0.5–5 body-lengths per cycle** (minimum 0.5 amoeba diameter when moving)
-- Cost: 0.1 energy × distance_in_body_lengths
+- Cost: 0.2 energy × distance_in_body_lengths
 - Clamped to world bounds (0–5 cm on each axis)
 
 ## Enemies
