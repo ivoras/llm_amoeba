@@ -86,14 +86,7 @@ export interface LLMChatRequest {
   temperature?: number
   max_tokens?: number
   max_completion_tokens?: number
-  response_format?: {
-    type: 'json_schema'
-    json_schema: {
-      name: string
-      strict: boolean
-      schema: Record<string, unknown>
-    }
-  }
+  response_format?: { type: 'json_object' }
 }
 
 export interface LLMUsage {

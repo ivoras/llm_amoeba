@@ -13,23 +13,7 @@ function useMaxCompletionTokens(model: string): boolean {
   return MAX_COMPLETION_TOKENS_MODEL_PATTERNS.some((re) => re.test(lower))
 }
 
-const ACTION_RESPONSE_FORMAT: LLMChatRequest['response_format'] = {
-  type: 'json_schema',
-  json_schema: {
-    name: 'amoeba_action',
-    strict: true,
-    schema: {
-      type: 'object',
-      properties: {
-        action: { type: 'string', enum: ['move', 'feed', 'divide'] },
-        direction: { enum: ['right', 'up-right', 'up', 'up-left', 'left', 'down-left', 'down', 'down-right', null] },
-        distance: { type: ['number', 'null'] },
-      },
-      required: ['action', 'direction', 'distance'],
-      additionalProperties: false,
-    },
-  },
-}
+const RESPONSE_FORMAT = { type: 'json_object' as const }
 
 export class LLMClient {
   async chat(
@@ -43,7 +27,7 @@ export class LLMClient {
     const body: LLMChatRequest = {
       model: settings.model,
       messages,
-      response_format: ACTION_RESPONSE_FORMAT,
+      response_format: RESPONSE_FORMAT,
       ...(!useCompletionTokens && { temperature: settings.temperature }),
       ...(useCompletionTokens
         ? { max_completion_tokens: maxTokens }
