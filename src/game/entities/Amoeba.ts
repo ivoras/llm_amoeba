@@ -7,6 +7,7 @@ import {
   WOBBLE_SPEED,
   MAX_ENERGY,
   MIN_ENERGY,
+  AMOEBA_DEATH_ENERGY_THRESHOLD,
   STARTING_ENERGY,
   cmToPx,
   pxToCm,
@@ -178,6 +179,11 @@ export class Amoeba extends Phaser.GameObjects.Graphics {
     const actualBodyLengths = actualDistPx / (AMOEBA_RADIUS_PX * 2)
     this.energy -= actualBodyLengths * MOVE_ENERGY_COST_PER_BODY_LENGTH
     this.energy = Math.max(MIN_ENERGY, this.energy)
+    this.checkDeath()
+    if (!this.alive) {
+      onComplete?.()
+      return
+    }
 
     this.isAnimating = true
     this.scene.tweens.add({
@@ -222,8 +228,12 @@ export class Amoeba extends Phaser.GameObjects.Graphics {
 
   takeDamage(amount: number): void {
     this.energy -= amount
-    if (this.energy <= MIN_ENERGY) {
-      this.energy = MIN_ENERGY
+    this.checkDeath()
+  }
+
+  private checkDeath(): void {
+    if (this.energy < AMOEBA_DEATH_ENERGY_THRESHOLD) {
+      this.energy = 0
       this.die()
     }
   }

@@ -191,7 +191,7 @@ export class CycleManager {
         }
       }
       if (!amoeba.alive) {
-        passiveLines.push('You have died! Energy reached 0.')
+        passiveLines.push('You have died! Energy fell below 0.1.')
       }
       const outcome = outcomes.get(amoeba.amoebaId) ?? 'No action taken.'
       const fullOutcome = passiveLines.length > 0

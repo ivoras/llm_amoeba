@@ -60,7 +60,7 @@ Energy is the currency of life. It ranges from **0 to 100** and starts at **50**
 | Poison decay | −0.1 per cycle (poison disappears when &lt; 0.1) |
 | Enemy contact | Drains 2 per cycle (within 4 body-lengths) |
 | Division | Requires 90+; each child gets half |
-| Reaching 0 | Death (creates a tombstone at that location) |
+| Falling below 0.1 | Death (creates a tombstone at that location) |
 
 The most successful amoebas will accumulate enough energy to **divide** — splitting into two independently-controlled organisms, each making their own LLM calls. This is the ultimate measure of success.
 

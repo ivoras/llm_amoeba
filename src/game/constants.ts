@@ -45,6 +45,7 @@ export const DIRECTIONS = [
 export const STARTING_ENERGY = 50
 export const MAX_ENERGY = 100
 export const MIN_ENERGY = 0
+export const AMOEBA_DEATH_ENERGY_THRESHOLD = 0.1
 export const DIVISION_ENERGY_THRESHOLD = 90
 export const FEEDING_GAIN_PER_CYCLE = 2
 export const POISON_DRAIN_PER_CYCLE = 3
