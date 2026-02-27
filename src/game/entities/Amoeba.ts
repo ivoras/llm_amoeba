@@ -78,7 +78,12 @@ export class Amoeba extends Phaser.GameObjects.Graphics {
 
     const energyRatio = this.energy / MAX_ENERGY
     const green = Math.floor(150 + 105 * energyRatio)
-    const color = Phaser.Display.Color.GetColor(30, green, 60)
+    // Pulse between green (30, green, 60) and yellow (255, 255, 0)
+    const t = 0.5 + 0.5 * Math.sin(this.wobbleTime * (4 / 3))
+    const r = Math.round(30 + (255 - 30) * t)
+    const g = Math.round(green + (255 - green) * t)
+    const b = Math.round(60 + (0 - 60) * t)
+    const color = Phaser.Display.Color.GetColor(r, g, b)
 
     this.fillStyle(color, 0.75)
     this.lineStyle(1.5, 0x1a6b1a, 0.9)

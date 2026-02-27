@@ -54,6 +54,18 @@ function resetDefaults() {
           v-model.number="gameStore.llmSettings.temperature"
         />
       </div>
+
+      <div class="field">
+        <label for="response-format">Response Format</label>
+        <select
+          id="response-format"
+          v-model="gameStore.llmSettings.responseFormatType"
+        >
+          <option value="json_object">JSON object (flexible)</option>
+          <option value="json_schema">JSON schema (strict)</option>
+          <option value="none">None (no format constraint)</option>
+        </select>
+      </div>
     </section>
 
     <section class="section">

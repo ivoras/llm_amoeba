@@ -13,7 +13,31 @@ function useMaxCompletionTokens(model: string): boolean {
   return MAX_COMPLETION_TOKENS_MODEL_PATTERNS.some((re) => re.test(lower))
 }
 
-const RESPONSE_FORMAT = { type: 'json_object' as const }
+const JSON_OBJECT_FORMAT = { type: 'json_object' as const }
+
+const JSON_SCHEMA_FORMAT: LLMChatRequest['response_format'] = {
+  type: 'json_schema',
+  json_schema: {
+    name: 'amoeba_action',
+    strict: true,
+    schema: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', enum: ['move', 'feed', 'divide'] },
+        direction: { enum: ['right', 'up-right', 'up', 'up-left', 'left', 'down-left', 'down', 'down-right', null] },
+        distance: { type: ['number', 'null'] },
+      },
+      required: ['action', 'direction', 'distance'],
+      additionalProperties: false,
+    },
+  },
+}
+
+function getResponseFormat(type: 'json_object' | 'json_schema' | 'none'): LLMChatRequest['response_format'] | undefined {
+  if (type === 'json_object') return JSON_OBJECT_FORMAT
+  if (type === 'json_schema') return JSON_SCHEMA_FORMAT
+  return undefined
+}
 
 export class LLMClient {
   async chat(
@@ -24,10 +48,11 @@ export class LLMClient {
 
     const useCompletionTokens = useMaxCompletionTokens(settings.model)
     const maxTokens = useCompletionTokens ? 2048 : settings.maxTokens
+    const responseFormat = getResponseFormat(settings.responseFormatType)
     const body: LLMChatRequest = {
       model: settings.model,
       messages,
-      response_format: RESPONSE_FORMAT,
+      ...(responseFormat && { response_format: responseFormat }),
       ...(!useCompletionTokens && { temperature: settings.temperature }),
       ...(useCompletionTokens
         ? { max_completion_tokens: maxTokens }

@@ -46,7 +46,8 @@ input, textarea, select, button {
 input[type="text"],
 input[type="password"],
 input[type="number"],
-textarea {
+textarea,
+select {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -57,7 +58,8 @@ textarea {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
   outline: none;
   border-color: var(--accent);
 }

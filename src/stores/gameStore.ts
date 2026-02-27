@@ -51,6 +51,7 @@ function getDefaultLLMSettings(): LLMSettings {
     temperature: 0.2,
     maxTokens: 150,
     systemPrompt: DEFAULT_SYSTEM_PROMPT,
+    responseFormatType: 'json_object',
   }
 }
 

@@ -60,6 +60,8 @@ export interface NearbyObject {
   details?: Record<string, number | string>
 }
 
+export type ResponseFormatType = 'json_object' | 'json_schema' | 'none'
+
 export interface LLMSettings {
   apiUrl: string
   apiKey: string
@@ -67,6 +69,7 @@ export interface LLMSettings {
   temperature: number
   maxTokens: number
   systemPrompt: string
+  responseFormatType: ResponseFormatType
 }
 
 export interface GameSettings {
@@ -86,7 +89,16 @@ export interface LLMChatRequest {
   temperature?: number
   max_tokens?: number
   max_completion_tokens?: number
-  response_format?: { type: 'json_object' }
+  response_format?:
+    | { type: 'json_object' }
+    | {
+        type: 'json_schema'
+        json_schema: {
+          name: string
+          strict: boolean
+          schema: Record<string, unknown>
+        }
+      }
 }
 
 export interface LLMUsage {
