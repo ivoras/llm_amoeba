@@ -20,6 +20,7 @@ and (ideally) accumulate enough energy to divide.
 Vue App (App.vue)
 ├── SettingsPanel.vue        LLM configuration, game controls
 ├── GameHUD.vue              Energy/cycle/amoeba-count overlay
+├── LLMLogPanel.vue          Per-cycle LLM decision log with raw prompt/response modal
 └── GameView.vue             Mounts Phaser canvas
      └── Phaser.Game
           └── GameScene
@@ -43,7 +44,7 @@ Communication between Vue and Phaser flows through a shared reactive store
 
 - Amoeba diameter: 0.025 cm → 30 px
 - Amoeba radius: 0.0125 cm → 15 px
-- Amoeba vision radius: 0.1 cm → 120 px
+- Amoeba vision radius: 0.3 cm → 360 px
 - Enemy vision radius: 0.05 cm → 60 px
 - Max food radius: 0.1 cm → 120 px
 - Max movement per cycle: 5 body-lengths = 0.125 cm → 150 px
@@ -83,12 +84,18 @@ d > 2R       → intensity = 0.0
 - Amoeba's center of mass must be within the food circle or halo.
 - Can feed only if `energy_at_position ≥ 1`.
 - Feeding subtracts 1 from the food's energy pool and adds 1 to the amoeba.
+- **Not cumulative**: if multiple food halos overlap the amoeba, it feeds from
+  only the single best food source (highest energy at position). Only that food
+  item loses energy.
 - As food depletes, the effective halo shrinks (positions that previously had
   energy ≥ 1 may drop below threshold).
 
 ### Poison Rules
 - Poison drains 1 energy per cycle from any amoeba/enemy whose center is within
   the poison circle or halo, regardless of action chosen.
+- **Cumulative**: if the amoeba's center is within multiple poison halos, it
+  takes damage from each one independently (e.g., 3 overlapping poisons = 3
+  energy drained per cycle).
 - Poison decays 0.1 per cycle like food; when energy &lt; 0.1, it disappears.
 
 ## Movement
@@ -115,6 +122,12 @@ d > 2R       → intensity = 0.0
 ### Request
 - Endpoint: OpenAI-compatible `POST {baseUrl}/chat/completions`
 - Model, temperature, max_tokens are user-configurable.
+- **Structured outputs**: every request includes `response_format` with
+  `type: "json_schema"` and `strict: true`, constraining the LLM to produce
+  valid JSON matching the action schema.
+- **Reasoning model detection**: models matching `o1`, `o3-*`, `gpt-oss-*`,
+  etc. are detected automatically. For these models the client sends
+  `max_completion_tokens` instead of `max_tokens` and omits `temperature`.
 
 ### System Prompt (default, user-editable)
 Tells the LLM it controls an amoeba and must respond with a single JSON object.
@@ -123,23 +136,41 @@ Tells the LLM it controls an amoeba and must respond with a single JSON object.
 Contains:
 - Amoeba position `(x, y)` in cm
 - Current energy
-- List of nearby objects within 0.1 cm vision radius:
+- List of nearby objects within the 0.3 cm vision radius:
   - type (food / poison / enemy / amoeba)
   - relative position (dx, dy) in cm
   - distance in cm
   - additional info (energy remaining for food, etc.)
 
-### Expected Response Format
+### Vision Detection
+The amoeba detects a food or poison item when any part of the item's halo
+intersects the vision circle: `center_distance ≤ vision_radius + item_radius × halo_multiplier`.
+Enemies and other amoebas are detected by center-to-center distance only.
+
+### Response JSON Schema
 ```json
-{"action": "move", "direction": 0, "distance": 1.5}
-{"action": "feed"}
-{"action": "divide"}
+{
+  "action": "move" | "feed" | "divide",
+  "direction": <integer 0–5 | null>,
+  "distance": <number 0.5–5 | null>
+}
 ```
 
-For move, `distance` must be 0.5–5 body lengths.
+All three fields are always present. For `feed` and `divide`, `direction` and
+`distance` are `null`. For `move`, `distance` must be 0.5–5 body lengths.
 
 If the response is unparseable or the action is invalid, the amoeba idles
 (no energy cost beyond passive effects like poison).
+
+### LLM Log
+The bottom panel shows a per-cycle log of every LLM decision. Each entry has
+a **{}** button that opens a modal showing the raw prompt messages and the raw
+LLM response for that cycle.
+
+## Visual Indicators
+
+- Each amoeba draws a **dashed dark gray circle** at its vision radius (0.3 cm / 360 px),
+  showing exactly what the amoeba can and cannot see.
 
 ## Camera System
 
@@ -168,6 +199,7 @@ src/
     GameView.vue              Phaser canvas mount
     SettingsPanel.vue          LLM config UI
     GameHUD.vue               Stats overlay
+    LLMLogPanel.vue           Decision log + raw prompt/response modal
   game/
     PhaserGame.ts             Phaser.Game factory
     constants.ts              All numeric constants

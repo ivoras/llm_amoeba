@@ -12,9 +12,9 @@ It's part game, part simulation, part AI stress test. Some models will thrive. O
 
 The game runs in **cycles**. Each cycle:
 
-1. The amoeba's surroundings (everything within 0.1 cm) are gathered and described in plain text.
+1. The amoeba's surroundings (everything within 0.3 cm) are gathered and described in plain text.
 2. That description — along with the amoeba's position and energy level — is sent to an LLM via an OpenAI-compatible API.
-3. The LLM responds with a JSON action: move in one of six directions, feed on nearby food, or divide into two amoebas.
+3. The LLM responds with a structured JSON action (enforced via JSON schema): move in one of six directions, feed on nearby food, or divide into two amoebas.
 4. The game executes the action with smooth animation, then applies passive effects (poison damage, predator attacks).
 5. Repeat.
 
@@ -30,7 +30,7 @@ The playing field is a **5 cm × 5 cm** surface rendered at microscopic scale. A
 Circular patches of nutrients scattered across the surface. Each has a **halo** — a gradient field twice the food's radius where energy is still available but weaker. The amoeba must position itself within this zone and choose to feed. Each feeding cycle transfers 1 energy point from the food. Food decays at **0.1 energy per cycle** (in addition to feeding). When energy drops below 0.1, the food disappears from the map.
 
 ### Poison (purple)
-Silent killers. Poison zones look like food but drain **1 energy per cycle** from any amoeba that wanders into their halo. There's no "feeding" on poison — it just hurts. Poison also decays at **0.1 energy per cycle**; when energy drops below 0.1, it disappears.
+Silent killers. Poison zones look like food but drain **1 energy per cycle** from any amoeba that wanders into their halo. There's no "feeding" on poison — it just hurts. **Poison damage is cumulative** — overlapping poison halos each drain independently. Poison also decays at **0.1 energy per cycle**; when energy drops below 0.1, it disappears.
 
 ### Movement
 When the LLM chooses to move, the distance must be **at least 0.5 amoeba diameter** (0.5 body lengths) per cycle, up to 5 body lengths. The amoeba cannot stand still when moving — it must travel at least this minimum.
@@ -47,9 +47,9 @@ Energy is the currency of life. It ranges from **0 to 100** and starts at **50**
 | Event | Effect |
 |---|---|
 | Moving | Costs 0.1 per body-length traveled |
-| Feeding | Gains 1 per cycle (when on food) |
+| Feeding | Gains 1 per cycle (single best food source) |
 | Food decay | −0.1 per cycle (food disappears when &lt; 0.1) |
-| Poison | Drains 1 per cycle (passive) |
+| Poison | Drains 1 per cycle per poison (cumulative) |
 | Poison decay | −0.1 per cycle (poison disappears when &lt; 0.1) |
 | Enemy contact | Drains 2 per cycle |
 | Division | Requires 90+; each child gets half |
@@ -80,7 +80,7 @@ Open `http://localhost:5173` in your browser.
 
 1. Click **Settings** in the top-right corner.
 2. Enter your **API URL** (e.g., `https://api.openai.com/v1`) and **API Key**.
-3. Choose a **model** (e.g., `gpt-4o-mini`).
+3. Choose a **model** (e.g., `gpt-5-mini`).
 4. Optionally tweak the **system prompt** — the default works well, but experimentation is encouraged.
 5. Adjust **temperature** and **cycle interval** to taste.
 6. Hit **Start** and watch your amoeba make its first decisions.
@@ -95,6 +95,7 @@ All settings are saved in your browser's local storage.
 - **Right-click drag** — pan the camera
 - **Click an amoeba** — select it (camera follows)
 - **Settings panel** — start, pause, reset, configure LLM
+- **LLM Log** — bottom panel shows every decision; click the **{}** button on any entry to see the full raw prompt and response
 
 ---
 
@@ -121,7 +122,7 @@ src/
     scenes/GameScene.ts   # Main game scene
     entities/             # Amoeba, Enemy, Food, Poison
     systems/              # CycleManager, VisionSystem, EnemyAI
-  llm/                    # LLM client, prompt builder, response parser
+  llm/                    # LLM client (structured outputs, reasoning model support), prompt builder, response parser
   stores/                 # Shared reactive state
   types/                  # TypeScript interfaces
 ```
@@ -133,7 +134,7 @@ See [AGENTS.md](AGENTS.md) for full technical documentation of game mechanics an
 ## Ideas to Try
 
 - **Prompt engineering**: Can you write a system prompt that makes the amoeba smarter? Try giving it explicit strategies.
-- **Model comparison**: How does GPT-4o compare to Claude or a local model? Does smarter = better survival?
+- **Model comparison**: How does GPT-5-mini compare to Sonnet 4-5, or a local model? Does smarter = better survival?
 - **Temperature tuning**: Low temperature for cautious play, high for chaotic exploration — what works?
 - **Speedrun division**: How fast can you get an amoeba to 90 energy and divide?
 

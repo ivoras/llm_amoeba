@@ -1,6 +1,7 @@
 import Phaser from 'phaser'
 import {
   AMOEBA_RADIUS_PX,
+  AMOEBA_VISION_PX,
   WOBBLE_SEGMENTS,
   WOBBLE_AMPLITUDE,
   WOBBLE_SPEED,
@@ -102,6 +103,19 @@ export class Amoeba extends Phaser.GameObjects.Graphics {
     // nucleus
     this.fillStyle(0x0a3a0a, 0.5)
     this.fillCircle(0, 0, AMOEBA_RADIUS_PX * 0.3)
+
+    // vision radius — dashed circle
+    const dashCount = 36
+    const gapFraction = 0.4
+    const arcPerSegment = (Math.PI * 2) / dashCount
+    const dashArc = arcPerSegment * (1 - gapFraction)
+    this.lineStyle(1, 0x333333, 0.45)
+    for (let i = 0; i < dashCount; i++) {
+      const startAngle = i * arcPerSegment
+      this.beginPath()
+      this.arc(0, 0, AMOEBA_VISION_PX, startAngle, startAngle + dashArc, false)
+      this.strokePath()
+    }
   }
 
   applyAction(action: AmoebaAction, onComplete?: () => void): void {

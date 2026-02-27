@@ -86,6 +86,19 @@ export class PoisonItem extends Phaser.GameObjects.Graphics {
     this.fillCircle(0, 0, this.radiusPx)
     this.lineStyle(1, 0x771199, 0.6)
     this.strokeCircle(0, 0, this.radiusPx)
+
+    // dashed halo outline
+    const dashCount = 32
+    const gapFraction = 0.4
+    const arcPerSegment = (Math.PI * 2) / dashCount
+    const dashArc = arcPerSegment * (1 - gapFraction)
+    this.lineStyle(1, 0x000000, 0.35)
+    for (let i = 0; i < dashCount; i++) {
+      const a = i * arcPerSegment
+      this.beginPath()
+      this.arc(0, 0, this.haloPx, a, a + dashArc, false)
+      this.strokePath()
+    }
   }
 
   remove(): void {

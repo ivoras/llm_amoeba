@@ -1,5 +1,33 @@
 import type { LLMChatRequest, LLMChatResponse, LLMMessage, LLMSettings } from '@/types'
 
+const REASONING_MODEL_PATTERNS = [
+  /\bo[1-9]\b/, /\bo[1-9][-_]/, // o1, o3, o3-mini, etc.
+  /\bgpt-oss\b/,                 // gpt-oss-20b, gpt-oss-175b, etc.
+]
+
+function isReasoningModel(model: string): boolean {
+  const lower = model.toLowerCase()
+  return REASONING_MODEL_PATTERNS.some((re) => re.test(lower))
+}
+
+const ACTION_RESPONSE_FORMAT: LLMChatRequest['response_format'] = {
+  type: 'json_schema',
+  json_schema: {
+    name: 'amoeba_action',
+    strict: true,
+    schema: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', enum: ['move', 'feed', 'divide'] },
+        direction: { type: ['integer', 'null'] },
+        distance: { type: ['number', 'null'] },
+      },
+      required: ['action', 'direction', 'distance'],
+      additionalProperties: false,
+    },
+  },
+}
+
 export class LLMClient {
   async chat(
     settings: LLMSettings,
@@ -7,11 +35,15 @@ export class LLMClient {
   ): Promise<string> {
     const url = `${settings.apiUrl.replace(/\/+$/, '')}/chat/completions`
 
+    const reasoning = isReasoningModel(settings.model)
     const body: LLMChatRequest = {
       model: settings.model,
       messages,
-      temperature: settings.temperature,
-      max_tokens: settings.maxTokens,
+      response_format: ACTION_RESPONSE_FORMAT,
+      ...(!reasoning && { temperature: settings.temperature }),
+      ...(reasoning
+        ? { max_completion_tokens: settings.maxTokens }
+        : { max_tokens: settings.maxTokens }),
     }
 
     const response = await fetch(url, {

@@ -17,6 +17,7 @@ import {
   POISON_RESPAWN_INTERVAL_CYCLES,
   INITIAL_FOOD_COUNT,
   INITIAL_POISON_COUNT,
+  DIVISION_ENERGY_THRESHOLD,
 } from '../constants'
 import { LLMClient } from '@/llm/LLMClient'
 import { PromptBuilder } from '@/llm/PromptBuilder'
@@ -27,7 +28,7 @@ import type { Amoeba } from '../entities/Amoeba'
 import type { Enemy } from '../entities/Enemy'
 import { FoodItem } from '../entities/FoodItem'
 import { PoisonItem } from '../entities/PoisonItem'
-import type { LLMSettings, AmoebaAction } from '@/types'
+import type { LLMSettings, LLMMessage, AmoebaAction } from '@/types'
 import { gameStore } from '@/stores/gameStore'
 
 export class CycleManager {
@@ -123,6 +124,8 @@ export class CycleManager {
     this.scheduleNextCycle()
   }
 
+  private static readonly MAX_RETRIES = 3
+
   private async getAmoebaAction(
     amoeba: Amoeba,
     settings: LLMSettings,
@@ -136,22 +139,54 @@ export class CycleManager {
         this.poisons,
       )
 
-      const messages = this.promptBuilder.buildMessages(
+      const messages: LLMMessage[] = this.promptBuilder.buildMessages(
         settings.systemPrompt,
         amoeba.getState(),
         surroundings,
       )
 
-      const rawResponse = await this.llmClient.chat(settings, messages)
-      const action = this.responseParser.parse(rawResponse)
-      const details = this.formatActionDetails(action)
+      for (let attempt = 0; attempt <= CycleManager.MAX_RETRIES; attempt++) {
+        const rawResponse = await this.llmClient.chat(settings, messages)
+        const action = this.responseParser.parse(rawResponse)
+
+        const rejection = this.validateAction(amoeba, action)
+        if (!rejection) {
+          const details = this.formatActionDetails(action)
+          gameStore.addLogEntry({
+            cycle: gameStore.stats.cycleCount,
+            amoebaId: amoeba.amoebaId,
+            action: action.action,
+            details: attempt > 0 ? `${details ?? ''} (retry ${attempt})`.trim() : details,
+            promptMessages: [...messages],
+            rawResponse,
+          })
+          return action
+        }
+
+        // Log the rejected attempt
+        gameStore.addLogEntry({
+          cycle: gameStore.stats.cycleCount,
+          amoebaId: amoeba.amoebaId,
+          action: 'rejected',
+          details: `${action.action}: ${rejection}`,
+          promptMessages: [...messages],
+          rawResponse,
+        })
+
+        if (attempt < CycleManager.MAX_RETRIES) {
+          messages.push({ role: 'assistant', content: rawResponse })
+          messages.push({ role: 'user', content: rejection })
+        }
+      }
+
       gameStore.addLogEntry({
         cycle: gameStore.stats.cycleCount,
         amoebaId: amoeba.amoebaId,
-        action: action.action,
-        details,
+        action: 'idle',
+        details: `gave up after ${CycleManager.MAX_RETRIES} retries`,
+        promptMessages: [...messages],
       })
-      return action
+      return { action: 'idle' }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       console.warn(`LLM call failed for ${amoeba.amoebaId}:`, err)
@@ -164,6 +199,31 @@ export class CycleManager {
       window.alert(`LLM Error: ${message}`)
       return { action: 'idle' }
     }
+  }
+
+  private validateAction(amoeba: Amoeba, action: AmoebaAction): string | null {
+    if (action.action === 'feed') {
+      const pos = amoeba.positionCm
+      const canFeed = this.foods.some((food) => {
+        if (food.depleted) return false
+        const dx = pos.x - food.positionCm.x
+        const dy = pos.y - food.positionCm.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        const maxRange = food.radiusCm * FOOD_HALO_MULTIPLIER
+        return dist <= maxRange && food.getEnergyAtDistance(dist) >= 1
+      })
+      if (!canFeed) {
+        return 'You cannot feed here — your center is not within any food halo. You must move closer to a food source first. Choose a different action.'
+      }
+    }
+
+    if (action.action === 'divide') {
+      if (amoeba.energy < DIVISION_ENERGY_THRESHOLD) {
+        return `You cannot divide — your energy is ${amoeba.energy.toFixed(1)} but you need at least ${DIVISION_ENERGY_THRESHOLD}. Choose a different action.`
+      }
+    }
+
+    return null
   }
 
   private formatActionDetails(action: AmoebaAction): string | undefined {

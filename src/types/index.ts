@@ -81,8 +81,17 @@ export interface LLMMessage {
 export interface LLMChatRequest {
   model: string
   messages: LLMMessage[]
-  temperature: number
-  max_tokens: number
+  temperature?: number
+  max_tokens?: number
+  max_completion_tokens?: number
+  response_format?: {
+    type: 'json_schema'
+    json_schema: {
+      name: string
+      strict: boolean
+      schema: Record<string, unknown>
+    }
+  }
 }
 
 export interface LLMChatResponse {
@@ -108,4 +117,6 @@ export interface LLMLogEntry {
   amoebaId: string
   action: string
   details?: string
+  promptMessages?: LLMMessage[]
+  rawResponse?: string
 }

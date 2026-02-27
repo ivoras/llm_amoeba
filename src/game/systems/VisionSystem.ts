@@ -1,5 +1,5 @@
 import type { NearbyObject, Position } from '@/types'
-import { AMOEBA_VISION_CM, ENEMY_VISION_CM } from '../constants'
+import { AMOEBA_VISION_CM, ENEMY_VISION_CM, FOOD_HALO_MULTIPLIER } from '../constants'
 import type { Amoeba } from '../entities/Amoeba'
 import type { Enemy } from '../entities/Enemy'
 import type { FoodItem } from '../entities/FoodItem'
@@ -27,7 +27,8 @@ export class VisionSystem {
       if (food.depleted) continue
       const fPos = food.positionCm
       const dist = distanceCm(pos, fPos)
-      if (dist <= visionRadius) {
+      const reachCm = food.radiusCm * FOOD_HALO_MULTIPLIER
+      if (dist <= visionRadius + reachCm) {
         result.push({
           type: 'food',
           relativePosition: { x: fPos.x - pos.x, y: fPos.y - pos.y },
@@ -45,7 +46,8 @@ export class VisionSystem {
       if (poison.depleted) continue
       const pPos = poison.positionCm
       const dist = distanceCm(pos, pPos)
-      if (dist <= visionRadius) {
+      const reachCm = poison.radiusCm * FOOD_HALO_MULTIPLIER
+      if (dist <= visionRadius + reachCm) {
         result.push({
           type: 'poison',
           relativePosition: { x: pPos.x - pos.x, y: pPos.y - pos.y },

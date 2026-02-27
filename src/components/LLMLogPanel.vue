@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onUnmounted } from 'vue'
 import { gameStore } from '@/stores/gameStore'
+import type { LLMLogEntry } from '@/types'
 
 const MIN_HEIGHT_PX = 104  // header + ~3 log entries
 const DEFAULT_HEIGHT_PX = 150
@@ -9,6 +10,15 @@ const MAX_HEIGHT_PX = 400
 const minimized = ref(false)
 const logContentRef = ref<HTMLElement | null>(null)
 const height = ref(DEFAULT_HEIGHT_PX)
+const modalEntry = ref<LLMLogEntry | null>(null)
+
+function openRawModal(entry: LLMLogEntry) {
+  modalEntry.value = entry
+}
+
+function closeModal() {
+  modalEntry.value = null
+}
 
 function onResizeStart(e: MouseEvent) {
   e.preventDefault()
@@ -84,6 +94,12 @@ watch(
           class="log-entry"
           :class="{ 'log-entry-error': entry.action === 'error' }"
         >
+          <button
+            v-if="entry.promptMessages"
+            class="log-raw-btn"
+            title="View raw prompt &amp; response"
+            @click="openRawModal(entry)"
+          >{}</button>
           <span class="log-cycle">C{{ entry.cycle }}</span>
           <span class="log-amoeba">{{ entry.amoebaId }}</span>
           <span class="log-action">{{ entry.action }}</span>
@@ -91,6 +107,37 @@ watch(
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="modalEntry" class="raw-modal-overlay" @click.self="closeModal">
+        <div class="raw-modal">
+          <header class="raw-modal-header">
+            <span>C{{ modalEntry.cycle }} &mdash; {{ modalEntry.amoebaId }} &mdash; {{ modalEntry.action }}</span>
+            <button class="raw-modal-close" @click="closeModal">&times;</button>
+          </header>
+          <div class="raw-modal-body">
+            <section v-if="modalEntry.promptMessages">
+              <h3>Prompt</h3>
+              <div
+                v-for="(msg, mi) in modalEntry.promptMessages"
+                :key="mi"
+                class="raw-msg"
+              >
+                <span class="raw-msg-role">{{ msg.role }}</span>
+                <pre class="raw-msg-content">{{ msg.content }}</pre>
+              </div>
+            </section>
+            <section v-if="modalEntry.rawResponse">
+              <h3>Response</h3>
+              <pre class="raw-msg-content">{{ modalEntry.rawResponse }}</pre>
+            </section>
+            <section v-if="!modalEntry.promptMessages && !modalEntry.rawResponse">
+              <p class="raw-empty">No raw data available for this entry.</p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -217,5 +264,120 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.log-raw-btn {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+  padding: 1px 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.log-raw-btn:hover {
+  background: rgba(88, 166, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.raw-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.raw-modal {
+  background: #161b22;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: min(720px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.raw-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.raw-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.raw-modal-close:hover {
+  color: var(--text-primary);
+}
+
+.raw-modal-body {
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.raw-modal-body h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+
+.raw-msg {
+  margin-bottom: 8px;
+}
+
+.raw-msg-role {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.raw-msg-content {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.raw-empty {
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 </style>

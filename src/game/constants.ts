@@ -18,7 +18,7 @@ export const VIEWPORT_WIDTH = 1000
 export const VIEWPORT_HEIGHT = 1000
 
 // Vision
-export const AMOEBA_VISION_CM = 0.1
+export const AMOEBA_VISION_CM = 0.3
 export const AMOEBA_VISION_PX = AMOEBA_VISION_CM * PIXELS_PER_CM // 120
 
 export const ENEMY_VISION_CM = 0.05
