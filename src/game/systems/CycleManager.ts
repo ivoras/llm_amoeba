@@ -336,24 +336,15 @@ export class CycleManager {
   private validateAction(amoeba: Amoeba, action: AmoebaAction): string | null {
     if (action.action === 'feed') {
       const pos = amoeba.positionCm
-      let nearestFoodDist = Infinity
-      let canFeed = false
-      for (const food of this.foods) {
-        if (food.depleted) continue
+      const canFeed = this.foods.some((food) => {
+        if (food.depleted) return false
         const dx = pos.x - food.positionCm.x
         const dy = pos.y - food.positionCm.y
         const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < nearestFoodDist) nearestFoodDist = dist
-        if (dist <= food.effectiveHaloRadiusCm && food.getEnergyAtDistance(dist) >= 1) {
-          canFeed = true
-          break
-        }
-      }
+        return dist <= food.effectiveHaloRadiusCm && food.getEnergyAtDistance(dist) >= 1
+      })
       if (!canFeed) {
-        if (nearestFoodDist === Infinity) {
-          return 'Feeding failed — no food exists on the map. Choose a different action.'
-        }
-        return `Feeding failed — nearest food is ${nearestFoodDist.toFixed(4)} cm away, which is out of range. Move closer to feed.`
+        return 'Feeding failed — no food is within range. Move closer to a food source first.'
       }
     }
 
@@ -403,15 +394,12 @@ export class CycleManager {
     const pos = amoeba.positionCm
     let bestFood: FoodItem | null = null
     let bestEnergy = 0
-    let nearestFoodDist = Infinity
 
     for (const food of this.foods) {
       if (food.depleted) continue
       const dx = pos.x - food.positionCm.x
       const dy = pos.y - food.positionCm.y
       const dist = Math.sqrt(dx * dx + dy * dy)
-
-      if (dist < nearestFoodDist) nearestFoodDist = dist
 
       if (dist <= food.effectiveHaloRadiusCm) {
         const energyHere = food.getEnergyAtDistance(dist)
@@ -429,10 +417,7 @@ export class CycleManager {
       return `Fed successfully — gained ${gained.toFixed(1)} energy from ${bestFood.foodId}.`
     }
 
-    if (nearestFoodDist === Infinity) {
-      return 'Feeding failed — no food exists on the map.'
-    }
-    return `Feeding failed — nearest food is ${nearestFoodDist.toFixed(4)} cm away, which is out of range. Move closer to feed.`
+    return 'Feeding failed — no food is within range. Move closer to a food source first.'
   }
 
   private handleDivision(amoeba: Amoeba): string {
