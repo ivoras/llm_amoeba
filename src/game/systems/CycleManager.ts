@@ -99,19 +99,25 @@ export class CycleManager {
     return this.cycling
   }
 
-  private scheduleNextCycle(): void {
+  private scheduleNextCycle(cycleStartTime?: number): void {
     if (!this.cycling) return
     if (this.cycleTimer !== null) return  // a timer is already pending; avoid double-scheduling
     const interval = gameStore.gameSettings.cycleIntervalMs
+    let delay = interval
+    if (cycleStartTime != null) {
+      const elapsed = Date.now() - cycleStartTime
+      delay = Math.max(0, interval - elapsed)
+    }
     this.cycleTimer = window.setTimeout(() => {
       this.cycleTimer = null
       this.runCycle()
-    }, interval)
+    }, delay)
   }
 
   private async runCycle(): Promise<void> {
     if (!this.cycling) return
 
+    const cycleStartTime = Date.now()
     gameStore.stats.cycleCount++
 
     const settings: LLMSettings = { ...gameStore.llmSettings }
@@ -196,7 +202,7 @@ export class CycleManager {
       return
     }
 
-    this.scheduleNextCycle()
+    this.scheduleNextCycle(cycleStartTime)
   }
 
   private static readonly MAX_RETRIES = 3
