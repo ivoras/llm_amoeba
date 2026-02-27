@@ -1,4 +1,9 @@
 import type { AmoebaState, NearbyObject, LLMMessage } from '@/types'
+import { AMOEBA_DIAMETER_CM } from '@/game/constants'
+
+function cmToBodyLengths(cm: number): number {
+  return cm / AMOEBA_DIAMETER_CM
+}
 
 export class PromptBuilder {
   buildMessages(
@@ -19,7 +24,9 @@ export class PromptBuilder {
   ): string {
     const lines: string[] = []
 
-    lines.push(`Position: (${amoeba.position.x.toFixed(4)}, ${amoeba.position.y.toFixed(4)})`)
+    const px = cmToBodyLengths(amoeba.position.x).toFixed(1)
+    const py = cmToBodyLengths(amoeba.position.y).toFixed(1)
+    lines.push(`Position: (${px}, ${py}) body-lengths`)
     lines.push(`Energy: ${amoeba.energy.toFixed(1)}`)
     lines.push('')
 
@@ -28,10 +35,10 @@ export class PromptBuilder {
     } else {
       lines.push(`Nearby objects (${surroundings.length}):`)
       for (const obj of surroundings) {
-        const dx = obj.relativePosition.x.toFixed(4)
-        const dy = obj.relativePosition.y.toFixed(4)
-        const dist = obj.distance.toFixed(4)
-        let detail = `- ${obj.type} at relative (${dx}, ${dy}), distance: ${dist} cm`
+        const dx = cmToBodyLengths(obj.relativePosition.x).toFixed(1)
+        const dy = cmToBodyLengths(obj.relativePosition.y).toFixed(1)
+        const dist = cmToBodyLengths(obj.distance).toFixed(1)
+        let detail = `- ${obj.type} at relative (${dx}, ${dy}), distance: ${dist} body-lengths`
         if (obj.details) {
           const extras = Object.entries(obj.details)
             .map(([k, v]) => `${k}: ${typeof v === 'number' ? (v as number).toFixed(1) : v}`)

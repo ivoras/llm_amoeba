@@ -38,13 +38,14 @@ export class EnemyAI {
         enemy.wander()
       }
 
-      this.applyDrainToNearbyAmoebas(enemy, amoebas)
+      enemy.feeding = this.applyDrainToNearbyAmoebas(enemy, amoebas)
     }
   }
 
-  private applyDrainToNearbyAmoebas(enemy: Enemy, amoebas: Amoeba[]): void {
+  private applyDrainToNearbyAmoebas(enemy: Enemy, amoebas: Amoeba[]): boolean {
     const drainRadiusCm = AMOEBA_RADIUS_CM * ENEMY_DRAIN_RADIUS_MULTIPLIER
     const ePos = enemy.positionCm
+    let draining = false
 
     for (const amoeba of amoebas) {
       if (!amoeba.alive) continue
@@ -54,7 +55,9 @@ export class EnemyAI {
       const dist = Math.sqrt(dx * dx + dy * dy)
       if (dist <= drainRadiusCm) {
         amoeba.takeDamage(ENEMY_DRAIN_PER_CYCLE)
+        draining = true
       }
     }
+    return draining
   }
 }

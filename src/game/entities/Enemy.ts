@@ -22,6 +22,7 @@ export class Enemy extends Phaser.GameObjects.Graphics {
   public enemyId: string
   public energy: number
   public alive: boolean = true
+  public feeding: boolean = false
 
   private wobbleTime: number = 0
   private wobbleOffsets: number[]
@@ -72,9 +73,19 @@ export class Enemy extends Phaser.GameObjects.Graphics {
   private drawShape(): void {
     this.clear()
 
-    const color = 0xcc2222
-    this.fillStyle(color, 0.75)
-    this.lineStyle(1.5, 0x881111, 0.9)
+    const pulse = this.feeding
+      ? 0.5 + 0.5 * Math.sin(this.wobbleTime * 8)
+      : 0
+    const color = this.feeding
+      ? Phaser.Display.Color.GetColor(
+          Math.round(204 + 51 * pulse),
+          Math.round(34 + 120 * pulse),
+          Math.round(34 + 20 * pulse),
+        )
+      : 0xcc2222
+    const alpha = this.feeding ? 0.6 + 0.35 * pulse : 0.75
+    this.fillStyle(color, alpha)
+    this.lineStyle(1.5, this.feeding ? 0xff4444 : 0x881111, 0.9)
 
     this.beginPath()
     for (let i = 0; i <= WOBBLE_SEGMENTS; i++) {
