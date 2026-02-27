@@ -86,6 +86,7 @@ export interface LLMChatRequest {
   temperature?: number
   max_tokens?: number
   max_completion_tokens?: number
+  reasoning?: { effort: 'low' | 'medium' | 'high' }
   response_format?: {
     type: 'json_schema'
     json_schema: {

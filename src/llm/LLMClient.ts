@@ -39,14 +39,17 @@ export class LLMClient {
     const url = `${settings.apiUrl.replace(/\/+$/, '')}/chat/completions`
 
     const useCompletionTokens = useMaxCompletionTokens(settings.model)
-    const maxTokens = useCompletionTokens ? 1024 : settings.maxTokens
+    const maxTokens = useCompletionTokens ? 2048 : settings.maxTokens
     const body: LLMChatRequest = {
       model: settings.model,
       messages,
       response_format: ACTION_RESPONSE_FORMAT,
       ...(!useCompletionTokens && { temperature: settings.temperature }),
       ...(useCompletionTokens
-        ? { max_completion_tokens: maxTokens }
+        ? {
+            max_completion_tokens: maxTokens,
+            reasoning: { effort: 'medium' },
+          }
         : { max_tokens: maxTokens }),
     }
 
