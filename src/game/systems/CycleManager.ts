@@ -1,7 +1,8 @@
 import {
   POISON_DRAIN_PER_CYCLE,
+  POISON_FOOD_DRAIN_PER_CYCLE,
   FEEDING_GAIN_PER_CYCLE,
-  FOOD_HALO_MULTIPLIER,
+
   FOOD_MIN_ENERGY,
   FOOD_MAX_ENERGY,
   MIN_FOOD_RADIUS_CM,
@@ -30,6 +31,7 @@ import { FoodItem } from '../entities/FoodItem'
 import { PoisonItem } from '../entities/PoisonItem'
 import type { LLMSettings, LLMMessage, AmoebaAction } from '@/types'
 import { gameStore } from '@/stores/gameStore'
+import { rng } from '../rng'
 
 export class CycleManager {
   private llmClient = new LLMClient()
@@ -81,8 +83,10 @@ export class CycleManager {
 
   private scheduleNextCycle(): void {
     if (!this.cycling) return
+    if (this.cycleTimer !== null) return  // a timer is already pending; avoid double-scheduling
     const interval = gameStore.gameSettings.cycleIntervalMs
     this.cycleTimer = window.setTimeout(() => {
+      this.cycleTimer = null
       this.runCycle()
     }, interval)
   }
@@ -116,6 +120,7 @@ export class CycleManager {
 
     this.enemyAI.update(this.enemies, this.amoebas, this.poisons)
     this.applyPassiveEffects()
+    this.applyPoisonFoodInteraction()
     this.applyDecay()
     this.removeDeadEntities()
     this.respawnItems()
@@ -130,6 +135,7 @@ export class CycleManager {
     amoeba: Amoeba,
     settings: LLMSettings,
   ): Promise<AmoebaAction> {
+    let messages: LLMMessage[] = []
     try {
       const surroundings = this.vision.getSurroundings(
         amoeba,
@@ -139,7 +145,7 @@ export class CycleManager {
         this.poisons,
       )
 
-      const messages: LLMMessage[] = this.promptBuilder.buildMessages(
+      messages = this.promptBuilder.buildMessages(
         settings.systemPrompt,
         amoeba.getState(),
         surroundings,
@@ -195,8 +201,8 @@ export class CycleManager {
         amoebaId: amoeba.amoebaId,
         action: 'error',
         details: message,
+        promptMessages: [...messages],
       })
-      window.alert(`LLM Error: ${message}`)
       return { action: 'idle' }
     }
   }
@@ -209,8 +215,7 @@ export class CycleManager {
         const dx = pos.x - food.positionCm.x
         const dy = pos.y - food.positionCm.y
         const dist = Math.sqrt(dx * dx + dy * dy)
-        const maxRange = food.radiusCm * FOOD_HALO_MULTIPLIER
-        return dist <= maxRange && food.getEnergyAtDistance(dist) >= 1
+        return dist <= food.effectiveHaloRadiusCm && food.getEnergyAtDistance(dist) >= 1
       })
       if (!canFeed) {
         return 'You cannot feed here — your center is not within any food halo. You must move closer to a food source first. Choose a different action.'
@@ -266,8 +271,7 @@ export class CycleManager {
       const dx = pos.x - food.positionCm.x
       const dy = pos.y - food.positionCm.y
       const dist = Math.sqrt(dx * dx + dy * dy)
-      const maxRange = food.radiusCm * FOOD_HALO_MULTIPLIER
-      if (dist <= maxRange) {
+      if (dist <= food.effectiveHaloRadiusCm) {
         const energyHere = food.getEnergyAtDistance(dist)
         if (energyHere >= 1 && energyHere > bestEnergy) {
           bestEnergy = energyHere
@@ -287,6 +291,22 @@ export class CycleManager {
     const child = amoeba.divide()
     if (child) {
       this.amoebas.push(child)
+    }
+  }
+
+  private applyPoisonFoodInteraction(): void {
+    for (const poison of this.poisons) {
+      if (poison.depleted) continue
+      const pPos = poison.positionCm
+      for (const food of this.foods) {
+        if (food.depleted) continue
+        const dx = pPos.x - food.positionCm.x
+        const dy = pPos.y - food.positionCm.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist <= food.effectiveHaloRadiusCm) {
+          food.drainEnergy(POISON_FOOD_DRAIN_PER_CYCLE)
+        }
+      }
     }
   }
 
@@ -352,20 +372,20 @@ export class CycleManager {
   }
 
   private spawnRandomFood(): void {
-    const x = Math.random() * WORLD_WIDTH_CM
-    const y = Math.random() * WORLD_HEIGHT_CM
-    const radius = MIN_FOOD_RADIUS_CM + Math.random() * (MAX_FOOD_RADIUS_CM - MIN_FOOD_RADIUS_CM)
-    const energy = FOOD_MIN_ENERGY + Math.floor(Math.random() * (FOOD_MAX_ENERGY - FOOD_MIN_ENERGY))
+    const x = rng() * WORLD_WIDTH_CM
+    const y = rng() * WORLD_HEIGHT_CM
+    const radius = MIN_FOOD_RADIUS_CM + rng() * (MAX_FOOD_RADIUS_CM - MIN_FOOD_RADIUS_CM)
+    const energy = FOOD_MIN_ENERGY + Math.floor(rng() * (FOOD_MAX_ENERGY - FOOD_MIN_ENERGY))
 
     const food = new FoodItem(this.scene, cmToPx(x), cmToPx(y), radius, energy)
     this.foods.push(food)
   }
 
   private spawnRandomPoison(): void {
-    const x = Math.random() * WORLD_WIDTH_CM
-    const y = Math.random() * WORLD_HEIGHT_CM
-    const radius = MIN_POISON_RADIUS_CM + Math.random() * (MAX_POISON_RADIUS_CM - MIN_POISON_RADIUS_CM)
-    const energy = POISON_MIN_ENERGY + Math.floor(Math.random() * (POISON_MAX_ENERGY - POISON_MIN_ENERGY))
+    const x = rng() * WORLD_WIDTH_CM
+    const y = rng() * WORLD_HEIGHT_CM
+    const radius = MIN_POISON_RADIUS_CM + rng() * (MAX_POISON_RADIUS_CM - MIN_POISON_RADIUS_CM)
+    const energy = POISON_MIN_ENERGY + Math.floor(rng() * (POISON_MAX_ENERGY - POISON_MIN_ENERGY))
 
     const poison = new PoisonItem(this.scene, cmToPx(x), cmToPx(y), radius, energy)
     this.poisons.push(poison)

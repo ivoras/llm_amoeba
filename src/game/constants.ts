@@ -54,6 +54,7 @@ export const FOOD_MIN_ENERGY = 2
 export const FOOD_MAX_ENERGY = 200
 export const FOOD_HALO_MULTIPLIER = 2
 export const FOOD_POISON_DECAY_PER_CYCLE = 0.1
+export const POISON_FOOD_DRAIN_PER_CYCLE = 0.6
 export const DECAY_DEPLETION_THRESHOLD = 0.1
 
 // Poison

@@ -49,7 +49,7 @@ function resetGame() {
           class="icon-btn icon-btn-danger"
           title="Reset"
           @click="resetGame"
-        >⏹</button>
+        >↺</button>
       </div>
       <button class="settings-toggle" @click="settingsOpen = !settingsOpen">
         {{ settingsOpen ? 'Close Settings' : 'Settings' }}

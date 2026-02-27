@@ -27,6 +27,7 @@ import { CycleManager } from '../systems/CycleManager'
 import { CameraController } from '../CameraController'
 import { registerScene } from '../PhaserGame'
 import { gameStore } from '@/stores/gameStore'
+import { rng, seedRng } from '../rng'
 
 export class GameScene extends Phaser.Scene {
   public amoebas: Amoeba[] = []
@@ -36,6 +37,7 @@ export class GameScene extends Phaser.Scene {
 
   public cycleManager!: CycleManager
   public cameraController!: CameraController
+  private tooltip!: Phaser.GameObjects.Text
 
   constructor() {
     super({ key: 'GameScene' })
@@ -67,8 +69,50 @@ export class GameScene extends Phaser.Scene {
       }
     })
 
+    this.tooltip = this.add.text(0, 0, '', {
+      fontSize: '11px',
+      fontFamily: 'monospace',
+      color: '#e6edf3',
+      backgroundColor: '#161b22ee',
+      padding: { left: 6, right: 6, top: 3, bottom: 3 },
+    })
+    this.tooltip.setDepth(1000).setVisible(false).setScrollFactor(0)
+
+    this.input.on('gameobjectover', (_pointer: Phaser.Input.Pointer, obj: Phaser.GameObjects.GameObject) => {
+      const text = this.getTooltipText(obj)
+      if (text) {
+        this.tooltip.setText(text).setVisible(true)
+      }
+    })
+
+    this.input.on('gameobjectout', () => {
+      this.tooltip.setVisible(false)
+    })
+
+    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+      if (this.tooltip.visible) {
+        this.tooltip.setPosition(pointer.x + 12, pointer.y - 8)
+      }
+    })
+
     this.updateStats()
     registerScene(this)
+  }
+
+  private getTooltipText(obj: Phaser.GameObjects.GameObject): string | null {
+    if (obj instanceof Amoeba && obj.alive) {
+      return `${obj.amoebaId}\nEnergy: ${obj.energy.toFixed(1)}`
+    }
+    if (obj instanceof Enemy && obj.alive) {
+      return `${obj.enemyId}\nEnergy: ${obj.energy.toFixed(1)}`
+    }
+    if (obj instanceof FoodItem && !obj.depleted) {
+      return `${obj.foodId}\nEnergy: ${obj.remainingEnergy.toFixed(1)} / ${obj.maxEnergy}`
+    }
+    if (obj instanceof PoisonItem && !obj.depleted) {
+      return `${obj.poisonId}\nEnergy: ${obj.remainingEnergy.toFixed(1)}`
+    }
+    return null
   }
 
   update(time: number, delta: number): void {
@@ -147,29 +191,31 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnInitialEntities(): void {
+    seedRng(gameStore.gameSettings.randomSeed)
+
     const centerX = cmToPx(WORLD_WIDTH_CM / 2)
     const centerY = cmToPx(WORLD_HEIGHT_CM / 2)
     const amoeba = new Amoeba(this, centerX, centerY)
     this.amoebas.push(amoeba)
 
     for (let i = 0; i < INITIAL_FOOD_COUNT; i++) {
-      const x = Math.random() * WORLD_WIDTH_CM
-      const y = Math.random() * WORLD_HEIGHT_CM
+      const x = rng() * WORLD_WIDTH_CM
+      const y = rng() * WORLD_HEIGHT_CM
       const radius =
-        MIN_FOOD_RADIUS_CM + Math.random() * (MAX_FOOD_RADIUS_CM - MIN_FOOD_RADIUS_CM)
+        MIN_FOOD_RADIUS_CM + rng() * (MAX_FOOD_RADIUS_CM - MIN_FOOD_RADIUS_CM)
       const energy =
-        FOOD_MIN_ENERGY + Math.floor(Math.random() * (FOOD_MAX_ENERGY - FOOD_MIN_ENERGY))
+        FOOD_MIN_ENERGY + Math.floor(rng() * (FOOD_MAX_ENERGY - FOOD_MIN_ENERGY))
       const food = new FoodItem(this, cmToPx(x), cmToPx(y), radius, energy)
       this.foods.push(food)
     }
 
     for (let i = 0; i < INITIAL_POISON_COUNT; i++) {
-      const x = Math.random() * WORLD_WIDTH_CM
-      const y = Math.random() * WORLD_HEIGHT_CM
+      const x = rng() * WORLD_WIDTH_CM
+      const y = rng() * WORLD_HEIGHT_CM
       const radius =
-        MIN_POISON_RADIUS_CM + Math.random() * (MAX_POISON_RADIUS_CM - MIN_POISON_RADIUS_CM)
+        MIN_POISON_RADIUS_CM + rng() * (MAX_POISON_RADIUS_CM - MIN_POISON_RADIUS_CM)
       const energy =
-        POISON_MIN_ENERGY + Math.floor(Math.random() * (POISON_MAX_ENERGY - POISON_MIN_ENERGY))
+        POISON_MIN_ENERGY + Math.floor(rng() * (POISON_MAX_ENERGY - POISON_MIN_ENERGY))
       const poison = new PoisonItem(this, cmToPx(x), cmToPx(y), radius, energy)
       this.poisons.push(poison)
     }
@@ -177,8 +223,8 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < INITIAL_ENEMY_COUNT; i++) {
       let x: number, y: number
       do {
-        x = Math.random() * WORLD_WIDTH_CM
-        y = Math.random() * WORLD_HEIGHT_CM
+        x = rng() * WORLD_WIDTH_CM
+        y = rng() * WORLD_HEIGHT_CM
       } while (
         Math.sqrt(
           (x - WORLD_WIDTH_CM / 2) ** 2 + (y - WORLD_HEIGHT_CM / 2) ** 2,

@@ -1,5 +1,22 @@
 # AGENTS.md — LLM Amoeba Technical Reference
 
+## Maintenance Policy
+
+**This file must be kept up to date.** Whenever a major feature is added,
+changed, or removed, update the relevant sections of this document in the same
+change. "Major" includes:
+
+- New game mechanics or changes to existing ones (energy, movement, feeding,
+  poison, vision, division)
+- New or removed entities, systems, or UI components
+- Changes to LLM integration (prompt format, response schema, retry logic, etc.)
+- Changes to constants that affect documented values (vision radius, world
+  scale, energy costs, etc.)
+- New visual indicators or debug tools
+- Any change that would make this document inaccurate if left unchanged
+
+When in doubt, update the doc.
+
 ## Overview
 
 LLM Amoeba is a 2D browser game where a Large Language Model controls a virtual amoeba
@@ -66,16 +83,25 @@ Energy is a float in [0, 100]. Starting value: 50.
 
 Each food/poison item has:
 - **center** (x, y) in cm
-- **radius** R (random, up to 0.1 cm)
+- **base radius** R (random, up to 0.1 cm)
 - **energy** (random integer, 2–200 for food; same range for poison)
 
 Both food and poison **decay at 0.1 energy per cycle**. When remaining energy drops below **0.1**, the item is removed from the map.
 
-Spatial intensity at distance `d` from center:
+### Proportional Radius Scaling
+Both core radius and halo radius scale linearly with the item's energy ratio
+(`remaining_energy / max_energy`). As an item is consumed or decays, it
+physically shrinks:
 ```
-d ≤ R        → intensity = 1.0
-R < d ≤ 2R   → intensity = 1.0 − (d − R) / R
-d > 2R       → intensity = 0.0
+effective_R    = R × (remaining_energy / max_energy)
+effective_halo = effective_R × 2
+```
+
+Spatial intensity at distance `d` from center (using effective radii):
+```
+d ≤ effective_R             → intensity = 1.0
+effective_R < d ≤ 2×eff_R  → intensity = 1.0 − (d − effective_R) / effective_R
+d > 2×effective_R           → intensity = 0.0
 ```
 
 **Energy available at position** = `intensity × remaining_energy`.
@@ -87,8 +113,8 @@ d > 2R       → intensity = 0.0
 - **Not cumulative**: if multiple food halos overlap the amoeba, it feeds from
   only the single best food source (highest energy at position). Only that food
   item loses energy.
-- As food depletes, the effective halo shrinks (positions that previously had
-  energy ≥ 1 may drop below threshold).
+- As food depletes, both core and halo radii shrink proportionally, so the
+  feedable area contracts over time.
 
 ### Poison Rules
 - Poison drains 1 energy per cycle from any amoeba/enemy whose center is within
@@ -169,8 +195,13 @@ LLM response for that cycle.
 
 ## Visual Indicators
 
-- Each amoeba draws a **dashed dark gray circle** at its vision radius (0.3 cm / 360 px),
-  showing exactly what the amoeba can and cannot see.
+All debug overlays are toggled together via **Settings → Show debug overlays**
+(stored as `gameSettings.showDebugOverlays`, default: on).
+
+- **Amoeba vision circle** — dashed dark gray circle at 0.3 cm / 360 px radius.
+- **Food halo outline** — dashed black circle at the outer edge of each food's
+  effective halo; shrinks with energy.
+- **Poison halo outline** — same, in black, for each poison item.
 
 ## Camera System
 

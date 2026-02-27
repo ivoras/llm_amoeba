@@ -39,6 +39,10 @@ export class Enemy extends Phaser.GameObjects.Graphics {
 
     scene.add.existing(this)
     this.setDepth(9)
+    this.setInteractive(
+      new Phaser.Geom.Circle(0, 0, AMOEBA_RADIUS_PX * 1.2),
+      Phaser.Geom.Circle.Contains,
+    )
     this.drawShape()
   }
 

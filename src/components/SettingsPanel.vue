@@ -85,11 +85,33 @@ function resetDefaults() {
         <input
           id="cycle-interval"
           type="range"
-          min="500"
-          max="10000"
-          step="100"
+          min="50"
+          max="2000"
+          step="50"
           v-model.number="gameStore.gameSettings.cycleIntervalMs"
         />
+      </div>
+      <div class="field">
+        <label for="random-seed">
+          Random Seed
+          <span class="field-hint">(0 = random each reset)</span>
+        </label>
+        <input
+          id="random-seed"
+          type="number"
+          min="0"
+          step="1"
+          placeholder="0"
+          v-model.number="gameStore.gameSettings.randomSeed"
+        />
+      </div>
+      <div class="field field-checkbox">
+        <input
+          id="debug-overlays"
+          type="checkbox"
+          v-model="gameStore.gameSettings.showDebugOverlays"
+        />
+        <label for="debug-overlays">Show debug overlays (vision radius, halo outlines)</label>
       </div>
     </section>
 
@@ -139,5 +161,30 @@ function resetDefaults() {
 .field input[type="range"] {
   width: 100%;
   margin-top: 4px;
+}
+
+.field-hint {
+  font-weight: 400;
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+.field-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-checkbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.field-checkbox label {
+  margin-bottom: 0;
+  cursor: pointer;
 }
 </style>

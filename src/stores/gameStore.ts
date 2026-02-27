@@ -56,6 +56,8 @@ function getDefaultLLMSettings(): LLMSettings {
 function getDefaultGameSettings(): GameSettings {
   return {
     cycleIntervalMs: DEFAULT_CYCLE_INTERVAL_MS,
+    showDebugOverlays: true,
+    randomSeed: 0,
   }
 }
 

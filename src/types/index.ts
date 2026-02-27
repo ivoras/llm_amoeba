@@ -71,6 +71,8 @@ export interface LLMSettings {
 
 export interface GameSettings {
   cycleIntervalMs: number
+  showDebugOverlays: boolean
+  randomSeed: number
 }
 
 export interface LLMMessage {

@@ -27,10 +27,10 @@ You configure which LLM to use, tweak the system prompt, and see if your amoeba 
 The playing field is a **5 cm × 5 cm** surface rendered at microscopic scale. A realistically-sized amoeba (~0.025 cm diameter) navigates this world with a camera that follows it and lets you zoom and pan.
 
 ### Food (green)
-Circular patches of nutrients scattered across the surface. Each has a **halo** — a gradient field twice the food's radius where energy is still available but weaker. The amoeba must position itself within this zone and choose to feed. Each feeding cycle transfers 1 energy point from the food. Food decays at **0.1 energy per cycle** (in addition to feeding). When energy drops below 0.1, the food disappears from the map.
+Circular patches of nutrients scattered across the surface. Each has a **halo** — a gradient field twice the food's radius where energy is still available but weaker. The amoeba must position itself within this zone and choose to feed. Each feeding cycle transfers 1 energy point from the food. Food decays at **0.1 energy per cycle** (in addition to feeding). As food loses energy, its **core and halo physically shrink** in proportion to remaining energy — a half-depleted food item is half the size. When energy drops below 0.1, the food disappears from the map.
 
 ### Poison (purple)
-Silent killers. Poison zones look like food but drain **1 energy per cycle** from any amoeba that wanders into their halo. There's no "feeding" on poison — it just hurts. **Poison damage is cumulative** — overlapping poison halos each drain independently. Poison also decays at **0.1 energy per cycle**; when energy drops below 0.1, it disappears.
+Silent killers. Poison zones look like food but drain **1 energy per cycle** from any amoeba that wanders into their halo. There's no "feeding" on poison — it just hurts. **Poison damage is cumulative** — overlapping poison halos each drain independently. Like food, poison **shrinks proportionally** as it decays at **0.1 energy per cycle**; when energy drops below 0.1, it disappears.
 
 ### Movement
 When the LLM chooses to move, the distance must be **at least 0.5 amoeba diameter** (0.5 body lengths) per cycle, up to 5 body lengths. The amoeba cannot stand still when moving — it must travel at least this minimum.
