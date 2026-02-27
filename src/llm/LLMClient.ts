@@ -1,13 +1,16 @@
 import type { LLMChatRequest, LLMChatResponse, LLMUsage, LLMMessage, LLMSettings } from '@/types'
 
-const REASONING_MODEL_PATTERNS = [
+// Models that require max_completion_tokens instead of max_tokens
+// (o1 series, GPT-5.x, gpt-oss, etc.)
+const MAX_COMPLETION_TOKENS_MODEL_PATTERNS = [
   /\bo[1-9]\b/, /\bo[1-9][-_]/, // o1, o3, o3-mini, etc.
-  /\bgpt-oss\b/,                 // gpt-oss-20b, gpt-oss-175b, etc.
+  /\bgpt-5/,                    // gpt-5-mini, gpt-5, gpt-5.1, gpt-5-nano-v1, etc.
+  /\bgpt-oss\b/,                // gpt-oss-20b, gpt-oss-175b, etc.
 ]
 
-function isReasoningModel(model: string): boolean {
+function useMaxCompletionTokens(model: string): boolean {
   const lower = model.toLowerCase()
-  return REASONING_MODEL_PATTERNS.some((re) => re.test(lower))
+  return MAX_COMPLETION_TOKENS_MODEL_PATTERNS.some((re) => re.test(lower))
 }
 
 const ACTION_RESPONSE_FORMAT: LLMChatRequest['response_format'] = {
@@ -35,13 +38,13 @@ export class LLMClient {
   ): Promise<{ content: string; usage?: LLMUsage }> {
     const url = `${settings.apiUrl.replace(/\/+$/, '')}/chat/completions`
 
-    const reasoning = isReasoningModel(settings.model)
+    const useCompletionTokens = useMaxCompletionTokens(settings.model)
     const body: LLMChatRequest = {
       model: settings.model,
       messages,
       response_format: ACTION_RESPONSE_FORMAT,
-      ...(!reasoning && { temperature: settings.temperature }),
-      ...(reasoning
+      ...(!useCompletionTokens && { temperature: settings.temperature }),
+      ...(useCompletionTokens
         ? { max_completion_tokens: settings.maxTokens }
         : { max_tokens: settings.maxTokens }),
     }
