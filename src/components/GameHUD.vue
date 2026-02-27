@@ -223,8 +223,9 @@ function shortId(id: string): string {
   border-top: 1px solid var(--border-color);
   margin-top: 2px;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .version-line {

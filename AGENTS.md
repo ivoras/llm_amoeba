@@ -181,7 +181,7 @@ Contains:
   - type (food / poison / enemy / amoeba / tombstone)
   - relative position (dx, dy) in body-lengths
   - distance in body-lengths
-  - additional info (energy remaining for food, etc.)
+  - additional info (radiusBodyLengths for food/poison, energy remaining for food, etc.)
 
 All distances and positions are expressed in **body-lengths** (1 body-length = 0.025 cm = amoeba diameter).
 

@@ -1,5 +1,9 @@
 import type { NearbyObject, Position } from '@/types'
-import { AMOEBA_VISION_CM, ENEMY_VISION_CM } from '../constants'
+import { AMOEBA_VISION_CM, AMOEBA_DIAMETER_CM, ENEMY_VISION_CM } from '../constants'
+
+function cmToBodyLengths(cm: number): number {
+  return cm / AMOEBA_DIAMETER_CM
+}
 import type { Amoeba } from '../entities/Amoeba'
 import type { Enemy } from '../entities/Enemy'
 import type { FoodItem } from '../entities/FoodItem'
@@ -35,7 +39,7 @@ export class VisionSystem {
           relativePosition: { x: fPos.x - pos.x, y: fPos.y - pos.y },
           distance: dist,
           details: {
-            radius: food.effectiveRadiusCm,
+            radiusBodyLengths: cmToBodyLengths(food.effectiveRadiusCm),
             foodEnergy: food.remainingEnergy,
             foodEnergyAccessibleAtCurrentPosition: food.getEnergyAtDistance(dist),
           },
@@ -53,7 +57,7 @@ export class VisionSystem {
           relativePosition: { x: pPos.x - pos.x, y: pPos.y - pos.y },
           distance: dist,
           details: {
-            radius: poison.effectiveRadiusCm,
+            radiusBodyLengths: cmToBodyLengths(poison.effectiveRadiusCm),
           },
         })
       }
